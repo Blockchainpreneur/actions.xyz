@@ -11,31 +11,20 @@ export interface SpeechState {
 
 interface UseSpeechOptions {
   onTranscript: (text: string, isFinal: boolean) => void
-  chunkDurationMs?: number
 }
 
-const CHUNK_DURATION_MS = 5000 // send audio every 5 seconds
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyWindow = Window & { SpeechRecognition?: any; webkitSpeechRecognition?: any }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRecognition = any
 
-async function transcribeBlob(blob: Blob): Promise<string> {
-  if (blob.size < 1000) return ''
-
-  const ext = blob.type.includes('webm') ? 'webm' : blob.type.includes('ogg') ? 'ogg' : 'mp4'
-  const file = new File([blob], `audio.${ext}`, { type: blob.type })
-
-  const form = new FormData()
-  form.append('audio', file)
-
-  try {
-    const res = await fetch('/api/transcribe', { method: 'POST', body: form })
-    if (!res.ok) return ''
-    const data = await res.json() as { text: string }
-    return data.text?.trim() ?? ''
-  } catch {
-    return ''
-  }
+function getSpeechRecognition(): (new () => AnyRecognition) | null {
+  if (typeof window === 'undefined') return null
+  const w = window as AnyWindow
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
 }
 
-export function useSpeech({ onTranscript, chunkDurationMs = CHUNK_DURATION_MS }: UseSpeechOptions) {
+export function useSpeech({ onTranscript }: UseSpeechOptions) {
   const [state, setState] = useState<SpeechState>({
     isListening: false,
     isSupported: false,
@@ -43,129 +32,87 @@ export function useSpeech({ onTranscript, chunkDurationMs = CHUNK_DURATION_MS }:
     error: null,
   })
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const chunksRef = useRef<Blob[]>([])
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const recognitionRef = useRef<AnyRecognition | null>(null)
   const isListeningRef = useRef(false)
+  const onTranscriptRef = useRef(onTranscript)
+  onTranscriptRef.current = onTranscript
 
   useEffect(() => {
-    const supported =
-      typeof window !== 'undefined' &&
-      typeof navigator.mediaDevices?.getUserMedia === 'function' &&
-      typeof MediaRecorder !== 'undefined'
-    setState(s => ({ ...s, isSupported: supported }))
+    setState(s => ({ ...s, isSupported: Boolean(getSpeechRecognition()) }))
   }, [])
 
-  const flushChunks = useCallback(async (mimeType: string) => {
-    const collected = chunksRef.current.slice()
-    chunksRef.current = []
-    if (!collected.length) return
-
-    const blob = new Blob(collected, { type: mimeType })
-    setState(s => ({ ...s, interimText: '...' }))
-    const text = await transcribeBlob(blob)
-    setState(s => ({ ...s, interimText: '' }))
-
-    if (text) {
-      onTranscript(text, true)
-    }
-  }, [onTranscript])
-
-  // Schedule the next chunk stop — always targets mediaRecorderRef.current so it
-  // works correctly even after the recorder has been replaced by onstop.
-  const scheduleNextStop = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      if (mediaRecorderRef.current?.state === 'recording') {
-        mediaRecorderRef.current.stop()
-      }
-    }, chunkDurationMs)
-  }, [chunkDurationMs])
-
-  const createRecorder = useCallback((stream: MediaStream) => {
-    // Pick the best supported mime type
-    const mimeType = [
-      'audio/webm;codecs=opus',
-      'audio/webm',
-      'audio/ogg;codecs=opus',
-      'audio/ogg',
-      'audio/mp4',
-    ].find(t => MediaRecorder.isTypeSupported(t)) ?? ''
-
-    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
-
-    recorder.ondataavailable = (e: BlobEvent) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data)
-    }
-
-    recorder.onstop = async () => {
-      const actualMime = recorder.mimeType || 'audio/webm'
-      await flushChunks(actualMime)
-
-      // Restart if still listening and schedule the next chunk
-      if (isListeningRef.current && streamRef.current) {
-        const next = createRecorder(streamRef.current)
-        mediaRecorderRef.current = next
-        next.start()
-        scheduleNextStop()
-      }
-    }
-
-    return recorder
-  }, [flushChunks, scheduleNextStop])
-
-  const startListening = useCallback(async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setState(s => ({ ...s, error: 'Microphone access not supported in this browser.' }))
+  const startListening = useCallback(() => {
+    const SR = getSpeechRecognition()
+    if (!SR) {
+      setState(s => ({ ...s, error: 'Speech recognition not supported. Use Chrome or Edge.' }))
       return
     }
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      streamRef.current = stream
-      isListeningRef.current = true
-      setState(s => ({ ...s, isListening: true, error: null }))
+    const recognition = new SR()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = 'en-US'
 
-      const recorder = createRecorder(stream)
-      mediaRecorderRef.current = recorder
-      recorder.start()
-      scheduleNextStop()
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Microphone access denied.'
-      setState(s => ({ ...s, error: msg, isListening: false }))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
+      let interim = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          onTranscriptRef.current(t.trim(), true)
+        } else {
+          interim += t
+        }
+      }
+      setState(s => ({ ...s, interimText: interim }))
     }
-  }, [createRecorder, scheduleNextStop])
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onerror = (event: any) => {
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setState(s => ({ ...s, error: 'Microphone access denied.', isListening: false }))
+        isListeningRef.current = false
+      }
+      // 'no-speech', 'network', 'aborted' are non-fatal — recognition auto-restarts via onend
+    }
+
+    recognition.onend = () => {
+      // Browser stops recognition after a pause. Restart if still listening.
+      if (isListeningRef.current) {
+        try { recognition.start() } catch { /* already started */ }
+      } else {
+        setState(s => ({ ...s, isListening: false, interimText: '' }))
+      }
+    }
+
+    recognitionRef.current = recognition
+    isListeningRef.current = true
+    setState(s => ({ ...s, isListening: true, error: null }))
+
+    try {
+      recognition.start()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to start microphone.'
+      setState(s => ({ ...s, error: msg, isListening: false }))
+      isListeningRef.current = false
+    }
+  }, [])
 
   const stopListening = useCallback(() => {
     isListeningRef.current = false
-
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop() } catch { /* ok */ }
+      recognitionRef.current = null
     }
-
-    if (mediaRecorderRef.current?.state !== 'inactive') {
-      try { mediaRecorderRef.current?.stop() } catch {}
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop())
-      streamRef.current = null
-    }
-
-    mediaRecorderRef.current = null
-    chunksRef.current = []
     setState(s => ({ ...s, isListening: false, interimText: '' }))
   }, [])
 
   useEffect(() => {
     return () => {
       isListeningRef.current = false
-      if (timerRef.current) clearTimeout(timerRef.current)
-      if (mediaRecorderRef.current?.state !== 'inactive') {
-        try { mediaRecorderRef.current?.stop() } catch {}
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort() } catch { /* ok */ }
       }
-      streamRef.current?.getTracks().forEach(t => t.stop())
     }
   }, [])
 

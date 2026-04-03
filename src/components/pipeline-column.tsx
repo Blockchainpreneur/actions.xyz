@@ -10,39 +10,24 @@ interface PipelineColumnProps {
   newestActionId?: string
   onMove: (id: string, status: ActionStatus) => void
   onDelete: (id: string) => void
+  onUpdateEmail: (id: string, email: string) => void
 }
 
+// Status icons used in empty state only
 const COLUMN_ICONS: Record<ActionStatus, React.ReactNode> = {
-  captured: (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-      <circle cx="5" cy="5" r="4" />
-    </svg>
-  ),
-  inprogress: (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-      <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M5 3v2l1.5 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  ),
-  blocked: (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-      <path d="M5 1L9 9H1L5 1z" opacity="0.85" />
-    </svg>
-  ),
-  done: (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-      <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
+  actions: <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="3" /></svg>,
+  assigned: <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><circle cx="4" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.2" /><path d="M1 7.5c0-1.66 1.34-3 3-3s3 1.34 3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>,
+  inprogress: <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><circle cx="4" cy="4" r="3" stroke="currentColor" strokeWidth="1.2" /><path d="M4 2.5v1.5l1 1" stroke="currentColor" strokeWidth="1" strokeLinecap="round" /></svg>,
+  indeadline: <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M4 0.5L7.5 7H0.5L4 0.5z" opacity="0.9" /></svg>,
+  completed: <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>,
 }
 
-export function PipelineColumn({ status, actions, newestActionId, onMove, onDelete }: PipelineColumnProps) {
+export function PipelineColumn({ status, actions, newestActionId, onMove, onDelete, onUpdateEmail }: PipelineColumnProps) {
   const config = COLUMN_CONFIG[status]
 
   const sorted = useMemo(() => {
     const priorityOrder = { high: 0, med: 1, low: 2 }
     return [...actions].sort((a, b) => {
-      // Newest first within same priority
       const pa = priorityOrder[a.priority]
       const pb = priorityOrder[b.priority]
       if (pa !== pb) return pa - pb
@@ -52,36 +37,37 @@ export function PipelineColumn({ status, actions, newestActionId, onMove, onDele
 
   return (
     <div className="flex flex-col gap-2 flex-shrink-0" style={{ width: 272 }}>
-      {/* Column header */}
-      <div
-        className="flex items-center justify-between px-3 py-2 rounded-md mb-1"
-        style={{
-          background: config.color,
-          border: `1px solid ${config.borderColor}`,
-        }}
-      >
-        <div
-          className="flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase"
-          style={{ color: config.textColor, fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.08em' }}
-        >
-          <span style={{ color: config.textColor }}>{COLUMN_ICONS[status]}</span>
-          {config.label}
-        </div>
+      {/* Top accent line — the only color, no background box */}
+      <div style={{ height: 1.5, background: config.textColor, opacity: 0.4, borderRadius: 1, marginBottom: 8 }} />
+
+      <div className="flex items-center justify-between px-0.5 mb-1">
         <span
-          className="text-xs px-1.5 py-0.5 rounded-full"
           style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            color: 'var(--text-muted)',
-            background: 'var(--surface-3)',
-            border: '1px solid var(--border-subtle)',
+            fontSize: 10,
+            fontWeight: 500,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: config.textColor,
+            opacity: 0.75,
           }}
         >
-          {actions.length}
+          {config.label}
         </span>
+        {actions.length > 0 && (
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              color: config.textColor,
+              opacity: 0.4,
+            }}
+          >
+            {actions.length}
+          </span>
+        )}
       </div>
 
-      {/* Cards */}
       <div className="flex flex-col gap-2">
         {sorted.map(action => (
           <ActionCard
@@ -89,19 +75,26 @@ export function PipelineColumn({ status, actions, newestActionId, onMove, onDele
             action={action}
             onMove={onMove}
             onDelete={onDelete}
+            onUpdateEmail={onUpdateEmail}
             isNew={action.id === newestActionId}
           />
         ))}
         {actions.length === 0 && (
           <div
-            className="flex items-center justify-center py-8 rounded-lg text-xs"
+            className="flex flex-col items-center justify-center gap-2 py-10 rounded-lg"
             style={{
               border: `1px dashed ${config.borderColor}`,
               color: 'var(--text-muted)',
-              background: `${config.color.replace('0.04', '0.02')}`,
+              background: config.color,
             }}
           >
-            —
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center"
+              style={{ border: `1px solid ${config.borderColor}`, color: config.textColor, opacity: 0.5 }}
+            >
+              {COLUMN_ICONS[status]}
+            </div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', opacity: 0.5 }}>empty</span>
           </div>
         )}
       </div>

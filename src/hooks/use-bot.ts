@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CalendarMeeting } from '@/lib/calendar'
 import type { BotStatus } from '@/lib/bot-manager'
 import { generateId, getParticipantColor, nameToInitial } from '@/lib/utils'
-import type { ActionItem, Participant } from '@/lib/types'
+import type { ActionItem, ActionStatus, Participant } from '@/lib/types'
 
 interface BotEvent {
   type: 'transcript' | 'actions'
@@ -12,6 +12,7 @@ interface BotEvent {
   ts?: number
   actions?: Array<{
     task: string
+    description?: string
     assignee: string
     assigneeType: 'human' | 'agent'
     priority: 'high' | 'med' | 'low'
@@ -89,7 +90,9 @@ export function useBot({ onTranscriptLine, onActionsExtracted }: UseBotOptions) 
             return {
               id: generateId(),
               text: a.task,
-              status: 'captured',
+              description: a.description,
+              // AI agent tasks start as assigned; human tasks need an email to become assigned
+              status: a.assigneeType === 'agent' ? 'assigned' : 'actions' as ActionStatus,
               assigneeType: a.assigneeType,
               assigneeName: a.assigneeType === 'agent' ? 'AI Agent' : (a.assignee || 'Unassigned'),
               assigneeInitial: participant?.initial,

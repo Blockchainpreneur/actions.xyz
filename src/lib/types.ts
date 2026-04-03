@@ -1,6 +1,6 @@
 export type AssigneeType = 'human' | 'agent'
 
-export type ActionStatus = 'captured' | 'inprogress' | 'blocked' | 'done'
+export type ActionStatus = 'actions' | 'assigned' | 'inprogress' | 'indeadline' | 'completed'
 
 export type Priority = 'high' | 'med' | 'low'
 
@@ -10,23 +10,26 @@ export interface Participant {
   id: string
   name: string
   initial: string
-  color: string // tailwind gradient class key
+  color: string
 }
 
 export interface ActionItem {
   id: string
   text: string
+  description?: string
   status: ActionStatus
   assigneeType: AssigneeType
   assigneeName: string
   assigneeInitial?: string
   assigneeColor?: string
+  assigneeEmail?: string
   priority: Priority
   tag?: Tag
-  sourceText?: string // excerpt from transcript that generated this
+  sourceText?: string
   createdAt: number
   dueDate?: string
   blockedReason?: string
+  sessionId?: string
 }
 
 export interface TranscriptLine {
@@ -37,7 +40,7 @@ export interface TranscriptLine {
   participantColor: string
   text: string
   timestamp: number
-  extractedActions?: string[] // action item texts extracted from this line
+  extractedActions?: string[]
 }
 
 export interface Session {
@@ -48,31 +51,38 @@ export interface Session {
   participants: Participant[]
   actions: ActionItem[]
   transcript: TranscriptLine[]
+  keyPoints?: string[]
 }
 
 export const COLUMN_CONFIG: Record<ActionStatus, { label: string; color: string; borderColor: string; textColor: string }> = {
-  captured: {
-    label: 'Captured',
-    color: 'rgba(6,182,212,0.04)',
-    borderColor: 'rgba(6,182,212,0.12)',
+  actions: {
+    label: 'Actions',
+    color: 'rgba(6,182,212,0.07)',
+    borderColor: 'rgba(6,182,212,0.16)',
     textColor: '#22d3ee',
+  },
+  assigned: {
+    label: 'Assigned',
+    color: 'rgba(99,102,241,0.07)',
+    borderColor: 'rgba(99,102,241,0.18)',
+    textColor: '#a5b4fc',
   },
   inprogress: {
     label: 'In Progress',
-    color: 'rgba(99,102,241,0.04)',
-    borderColor: 'rgba(99,102,241,0.15)',
-    textColor: '#a5b4fc',
+    color: 'rgba(234,179,8,0.07)',
+    borderColor: 'rgba(234,179,8,0.18)',
+    textColor: '#fde047',
   },
-  blocked: {
-    label: 'Blocked',
-    color: 'rgba(249,115,22,0.04)',
-    borderColor: 'rgba(249,115,22,0.12)',
+  indeadline: {
+    label: 'In Deadline',
+    color: 'rgba(249,115,22,0.07)',
+    borderColor: 'rgba(249,115,22,0.16)',
     textColor: '#fdba74',
   },
-  done: {
-    label: 'Done',
-    color: 'rgba(16,185,129,0.04)',
-    borderColor: 'rgba(16,185,129,0.1)',
+  completed: {
+    label: 'Completed',
+    color: 'rgba(16,185,129,0.07)',
+    borderColor: 'rgba(16,185,129,0.14)',
     textColor: '#6ee7b7',
   },
 }

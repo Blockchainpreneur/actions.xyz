@@ -43,41 +43,30 @@ export async function POST(req: NextRequest) {
   // Push transcript line to SSE stream
   pushEvent(meetingId, { type: 'transcript', text, ts: Date.now() })
 
-  // Step 2: Extract action items via Claude
-  const anthropicKey = process.env.ANTHROPIC_API_KEY
-  if (!anthropicKey) return NextResponse.json({ ok: true })
-
+  // Step 2: Extract action items via Groq Llama 3
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 512,
-        system: `Extract action items from meeting transcript. Return JSON only:
+    const response = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        {
+          role: 'system',
+          content: `Extract action items from meeting transcript. Return JSON only:
 {"actions":[{"task":"...","assignee":"...","assigneeType":"human"|"agent","priority":"high"|"med"|"low","tag":"engineering"|"design"|"data"|"ops"|"content"|"product"|"automated"}],"participants":["Name1"]}
 Return empty arrays if nothing actionable. No markdown.`,
-        messages: [{
-          role: 'user',
-          content: `Extract action items: "${text}"`,
-        }],
-      }),
+        },
+        { role: 'user', content: `Extract action items: "${text}"` },
+      ],
+      temperature: 0.1,
+      max_tokens: 512,
     })
 
-    if (resp.ok) {
-      const data = await resp.json() as { content: Array<{ text: string }> }
-      const raw = data.content?.[0]?.text?.trim() ?? ''
-      try {
-        const parsed = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, ''))
-        if (parsed.actions?.length) {
-          pushEvent(meetingId, { type: 'actions', actions: parsed.actions, participants: parsed.participants ?? [] })
-        }
-      } catch {}
-    }
+    const raw = response.choices[0]?.message?.content?.trim() ?? ''
+    try {
+      const parsed = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, '')) as { actions?: unknown[]; participants?: unknown[] }
+      if (parsed.actions?.length) {
+        pushEvent(meetingId, { type: 'actions', actions: parsed.actions, participants: parsed.participants ?? [] })
+      }
+    } catch {}
   } catch (err) {
     console.error('[bot/audio] extract error:', err)
   }

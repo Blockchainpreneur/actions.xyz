@@ -15,9 +15,11 @@ export function useCalendar() {
   const [error, setError] = useState<string | null>(null)
 
   const isSignedIn = status === 'authenticated'
+  // @ts-expect-error — accessToken added in jwt callback
+  const hasCalendarAccess = isSignedIn && Boolean(session?.accessToken)
 
   const fetchMeetings = useCallback(async () => {
-    if (!isSignedIn) return
+    if (!hasCalendarAccess) return
     setLoading(true)
     try {
       const res = await fetch('/api/calendar')
@@ -36,11 +38,11 @@ export function useCalendar() {
   }, [isSignedIn])
 
   useEffect(() => {
-    if (!isSignedIn) return
+    if (!hasCalendarAccess) return
     fetchMeetings()
     const id = setInterval(fetchMeetings, POLL_INTERVAL)
     return () => clearInterval(id)
-  }, [isSignedIn, fetchMeetings])
+  }, [hasCalendarAccess, fetchMeetings])
 
   // The meeting that's starting soon (±window)
   const upcomingMeeting = meetings.find(m => {
@@ -60,6 +62,7 @@ export function useCalendar() {
     nextMeeting,
     minutesUntilNext,
     isSignedIn,
+    hasCalendarAccess,
     loading,
     error,
     refresh: fetchMeetings,

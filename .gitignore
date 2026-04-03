@@ -43,6 +43,12 @@ yarn-error.log*
 # claude code / ai tooling — local only
 .claude/
 .claude-flow/
+.playwright-mcp/
+.swarm/
+
+# test artifacts
+test-results/
+test-*.png
 
 # typescript
 *.tsbuildinfo

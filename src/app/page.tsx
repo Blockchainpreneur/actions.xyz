@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useActions } from '@/hooks/use-actions'
 import { useCalendar } from '@/hooks/use-calendar'
@@ -17,19 +17,32 @@ export default function Home() {
   const {
     session: meetingSession,
     isExtracting,
+    isSynthesizing,
     extractError,
+    keyPoints,
+    sessionHistory,
+    addKeyPoints,
     extractActionsFromText,
     addTranscriptLine,
     moveAction,
     deleteAction,
+    updateActionEmail,
     updateSessionName,
     addParticipant,
     newSession,
     addActionsDirectly,
+    createActionFromPoint,
+    synthesizeSession,
   } = useActions()
 
   const [newestActionId, setNewestActionId] = useState<string | undefined>()
-  const { meetings, upcomingMeeting, isSignedIn, loading: calendarLoading, refresh: refreshCalendar } = useCalendar()
+  const meetingSessionRef = useRef(meetingSession)
+  meetingSessionRef.current = meetingSession
+  // Ref so callbacks never go stale while accumulating key points
+  const keyPointsRef = useRef(keyPoints)
+  keyPointsRef.current = keyPoints
+
+  const { meetings, upcomingMeeting, isSignedIn, hasCalendarAccess, loading: calendarLoading, refresh: refreshCalendar } = useCalendar()
 
   // Called by the bot SSE stream when new actions arrive from a meeting
   const handleBotActions = useCallback((actions: ActionItem[], newParticipants: Participant[]) => {
@@ -46,11 +59,27 @@ export default function Home() {
     onActionsExtracted: handleBotActions,
   })
 
-  const handleExtract = useCallback(async (text: string) => {
-    if (!meetingSession) return
-    await extractActionsFromText(text, meetingSession.participants)
+  const handleExtract = useCallback(async (text: string, context: string) => {
+    if (!meetingSessionRef.current) return
+    // Pass key points as narrative context so task descriptions have full meeting story
+    await extractActionsFromText(text, meetingSessionRef.current.participants, context, keyPointsRef.current)
     setTimeout(() => setNewestActionId(undefined), 2000)
-  }, [meetingSession, extractActionsFromText])
+  }, [extractActionsFromText])
+
+  const handleSummarize = useCallback(async (text: string, _context: string) => {
+    try {
+      const res = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Use structured key points as context — richer than raw transcript chars
+        body: JSON.stringify({ text, existingPoints: keyPointsRef.current }),
+      })
+      if (res.ok) {
+        const data = await res.json() as { points: string[] }
+        addKeyPoints(data.points)
+      }
+    } catch { /* silent — summary is best-effort */ }
+  }, [addKeyPoints])
 
   if (!meetingSession) {
     return (
@@ -65,9 +94,9 @@ export default function Home() {
 
   return (
     <MeetingListener
-      session={meetingSession}
       onTranscriptLine={addTranscriptLine}
       onExtractRequest={handleExtract}
+      onSummarizeRequest={handleSummarize}
     >
       {({ isListening, isSupported, interimText, error, startListening, stopListening }) => (
         <div className="flex flex-col" style={{ height: '100vh' }}>
@@ -76,7 +105,7 @@ export default function Home() {
             isListening={isListening}
             isSupported={isSupported}
             onStartRecording={startListening}
-            onStopRecording={stopListening}
+            onStopRecording={() => { stopListening(); synthesizeSession() }}
             onAddParticipant={addParticipant}
             onUpdateName={updateSessionName}
             onNewSession={newSession}
@@ -126,12 +155,19 @@ export default function Home() {
 
           <div className="flex flex-1 min-h-0">
             <TranscriptSidebar
-              lines={meetingSession.transcript}
+              keyPoints={keyPoints}
               interimText={interimText}
               isListening={isListening}
               isExtracting={isExtracting}
+              isSynthesizing={isSynthesizing}
+              onCreateActionFromPoint={(text) => {
+                const id = createActionFromPoint(text)
+                setNewestActionId(id)
+                setTimeout(() => setNewestActionId(undefined), 2000)
+              }}
               meetings={meetings}
               isSignedIn={isSignedIn}
+              hasCalendarAccess={hasCalendarAccess}
               calendarLoading={calendarLoading}
               activeMeetingId={activeMeetingId}
               botStatus={botStatus}
@@ -139,12 +175,14 @@ export default function Home() {
               onStopBot={stopBot}
               onRefreshCalendar={refreshCalendar}
               userEmail={session?.user?.email}
+              pastSessions={meetingSession ? [meetingSession, ...sessionHistory] : sessionHistory}
             />
             <PipelineBoard
               session={meetingSession}
               newestActionId={newestActionId}
               onMove={moveAction}
               onDelete={deleteAction}
+              onUpdateEmail={updateActionEmail}
             />
           </div>
         </div>

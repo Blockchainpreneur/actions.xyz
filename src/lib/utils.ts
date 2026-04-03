@@ -85,7 +85,7 @@ export function buildDemoSession(): { participants: Participant[]; actions: Acti
     {
       id: generateId(),
       text: 'Set up staging environment for QA testing',
-      status: 'blocked',
+      status: 'indeadline',
       assigneeType: 'human',
       assigneeName: 'Alex',
       assigneeInitial: 'A',
@@ -98,7 +98,7 @@ export function buildDemoSession(): { participants: Participant[]; actions: Acti
     {
       id: generateId(),
       text: 'Generate and distribute meeting summary',
-      status: 'done',
+      status: 'completed',
       assigneeType: 'agent',
       assigneeName: 'AI Agent',
       priority: 'low',
@@ -108,7 +108,7 @@ export function buildDemoSession(): { participants: Participant[]; actions: Acti
     {
       id: generateId(),
       text: 'Define Q2 OKRs and share with team',
-      status: 'done',
+      status: 'completed',
       assigneeType: 'human',
       assigneeName: 'Alex',
       assigneeInitial: 'A',

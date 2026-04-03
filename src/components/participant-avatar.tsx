@@ -42,7 +42,15 @@ export function ParticipantAvatar({
         color: 'rgba(255,255,255,0.95)',
       }}
     >
-      {isAgent ? '⚡' : initial}
+      {isAgent ? (
+        <svg width={s.font} height={s.font} viewBox="0 0 12 12" fill="none">
+          <path
+            d="M7 1L3 7h4l-2 4 6-6H7L9 1z"
+            fill="rgba(255,255,255,0.92)"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ) : initial}
     </div>
   )
 }
