@@ -30,7 +30,10 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+          // Only request basic scopes at login — no sensitive scopes
+          // This allows the app to be published without Google verification
+          // Calendar access can be requested incrementally later
+          scope: 'openid email profile',
           access_type: 'offline',
           prompt: 'consent',
         },
