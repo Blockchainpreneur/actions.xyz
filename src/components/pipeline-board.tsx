@@ -12,9 +12,10 @@ interface PipelineBoardProps {
   onMove: (id: string, status: ActionStatus) => void
   onDelete: (id: string) => void
   onUpdateEmail: (id: string, email: string) => void
+  onAssignEmails?: (id: string, emails: string[]) => Promise<void>
 }
 
-export function PipelineBoard({ session, newestActionId, onMove, onDelete, onUpdateEmail }: PipelineBoardProps) {
+export function PipelineBoard({ session, newestActionId, onMove, onDelete, onUpdateEmail, onAssignEmails }: PipelineBoardProps) {
   const actionsByStatus = useMemo(() => {
     const grouped: Record<ActionStatus, ActionItem[]> = {
       actions: [],
@@ -45,6 +46,7 @@ export function PipelineBoard({ session, newestActionId, onMove, onDelete, onUpd
             onMove={onMove}
             onDelete={onDelete}
             onUpdateEmail={onUpdateEmail}
+            onAssignEmails={onAssignEmails}
           />
         ))}
       </div>

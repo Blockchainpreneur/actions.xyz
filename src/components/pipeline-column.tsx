@@ -11,6 +11,7 @@ interface PipelineColumnProps {
   onMove: (id: string, status: ActionStatus) => void
   onDelete: (id: string) => void
   onUpdateEmail: (id: string, email: string) => void
+  onAssignEmails?: (id: string, emails: string[]) => Promise<void>
 }
 
 // Status icons used in empty state only
@@ -22,7 +23,7 @@ const COLUMN_ICONS: Record<ActionStatus, React.ReactNode> = {
   completed: <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>,
 }
 
-export function PipelineColumn({ status, actions, newestActionId, onMove, onDelete, onUpdateEmail }: PipelineColumnProps) {
+export function PipelineColumn({ status, actions, newestActionId, onMove, onDelete, onUpdateEmail, onAssignEmails }: PipelineColumnProps) {
   const config = COLUMN_CONFIG[status]
 
   const sorted = useMemo(() => {
@@ -76,6 +77,7 @@ export function PipelineColumn({ status, actions, newestActionId, onMove, onDele
             onMove={onMove}
             onDelete={onDelete}
             onUpdateEmail={onUpdateEmail}
+            onAssignEmails={onAssignEmails}
             isNew={action.id === newestActionId}
           />
         ))}

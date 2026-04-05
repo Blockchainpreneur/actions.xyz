@@ -81,6 +81,17 @@ export default function Home() {
     } catch { /* silent — summary is best-effort */ }
   }, [addKeyPoints])
 
+  // Assign emails to a task — calls the DB API which creates ghost users + sends emails
+  const handleAssignEmails = useCallback(async (taskId: string, emails: string[]) => {
+    try {
+      await fetch(`/api/db/tasks/${taskId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emails }),
+      })
+    } catch { /* best effort */ }
+  }, [])
+
   if (!meetingSession) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -183,6 +194,7 @@ export default function Home() {
               onMove={moveAction}
               onDelete={deleteAction}
               onUpdateEmail={updateActionEmail}
+              onAssignEmails={handleAssignEmails}
             />
           </div>
         </div>

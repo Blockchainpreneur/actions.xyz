@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Trash2, ArrowRight, Mail, ChevronDown } from 'lucide-react'
+import { useState, useRef, useCallback } from 'react'
+import { Trash2, ArrowRight, ChevronDown } from 'lucide-react'
 import { type ActionItem, type ActionStatus, TAG_CONFIG, COLUMN_CONFIG } from '@/lib/types'
 import { relativeTime } from '@/lib/utils'
 import { ParticipantAvatar } from './participant-avatar'
+import { MultiEmailInput } from './multi-email-input'
 
 interface ActionCardProps {
   action: ActionItem
   onMove: (id: string, status: ActionStatus) => void
   onDelete: (id: string) => void
   onUpdateEmail: (id: string, email: string) => void
+  onAssignEmails?: (id: string, emails: string[]) => Promise<void>
   isNew?: boolean
 }
 
@@ -23,12 +25,38 @@ const PRIORITY_INSET: Record<ActionItem['priority'], string> = {
 
 const STATUS_ORDER: ActionStatus[] = ['actions', 'assigned', 'inprogress', 'indeadline', 'completed']
 
-export function ActionCard({ action, onMove, onDelete, onUpdateEmail, isNew = false }: ActionCardProps) {
+export function ActionCard({ action, onMove, onDelete, onUpdateEmail, onAssignEmails, isNew = false }: ActionCardProps) {
   const [showControls, setShowControls] = useState(false)
   const [editingEmail, setEditingEmail] = useState(false)
   const [emailDraft, setEmailDraft] = useState(action.assigneeEmail ?? '')
   const [expanded, setExpanded] = useState(false)
+  const [assignedEmails, setAssignedEmails] = useState<string[]>(action.assigneeEmails ?? (action.assigneeEmail ? [action.assigneeEmail] : []))
+  const [isAssigning, setIsAssigning] = useState(false)
   const emailInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAddEmail = useCallback(async (email: string) => {
+    if (assignedEmails.includes(email)) return
+    setAssignedEmails(prev => [...prev, email])
+    setIsAssigning(true)
+
+    // Call assign API (sends notification email + creates ghost user)
+    if (onAssignEmails) {
+      try {
+        await onAssignEmails(action.id, [email])
+      } catch { /* best effort */ }
+    } else {
+      // Fallback to legacy single-email
+      onUpdateEmail(action.id, email)
+    }
+    setIsAssigning(false)
+  }, [assignedEmails, action.id, onAssignEmails, onUpdateEmail])
+
+  const handleRemoveEmail = useCallback((email: string) => {
+    setAssignedEmails(prev => prev.filter(e => e !== email))
+    if (assignedEmails.length <= 1) {
+      onUpdateEmail(action.id, '')
+    }
+  }, [assignedEmails, action.id, onUpdateEmail])
 
   const tagConfig = action.tag ? TAG_CONFIG[action.tag] : null
   const isDone = action.status === 'completed'
@@ -210,53 +238,13 @@ export function ActionCard({ action, onMove, onDelete, onUpdateEmail, isNew = fa
             {action.assigneeName}
           </span>
 
-          {/* Email — inline after name */}
-          {editingEmail ? (
-            <input
-              ref={emailInputRef}
-              type="email"
-              value={emailDraft}
-              onChange={e => setEmailDraft(e.target.value)}
-              onBlur={commitEmail}
-              onKeyDown={e => {
-                if (e.key === 'Enter') commitEmail()
-                if (e.key === 'Escape') { setEditingEmail(false); setEmailDraft(action.assigneeEmail ?? '') }
-              }}
-              placeholder="email@co.com"
-              autoFocus
-              onClick={e => e.stopPropagation()}
-              className="outline-none"
-              style={{
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border-accent)',
-                borderRadius: 4,
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                padding: '1px 6px',
-                width: 120,
-              }}
-            />
-          ) : (
-            <button
-              onClick={(e) => { e.stopPropagation(); setEditingEmail(true); setEmailDraft(action.assigneeEmail ?? ''); setTimeout(() => emailInputRef.current?.focus(), 0) }}
-              className="btn-press flex items-center gap-1"
-              style={{
-                background: action.assigneeEmail ? 'rgba(40,204,230,0.07)' : 'transparent',
-                border: `1px solid ${action.assigneeEmail ? 'var(--border-accent)' : 'var(--border-subtle)'}`,
-                borderRadius: 20,
-                padding: action.assigneeEmail ? '1px 6px' : '1px 5px',
-                color: action.assigneeEmail ? 'var(--cyan-400)' : 'var(--text-muted)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9,
-                letterSpacing: '0.03em',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {!action.assigneeEmail && <Mail size={8} />}
-              {action.assigneeEmail ? action.assigneeEmail : 'add email'}
-            </button>
-          )}
+          {/* Multi-email assignment — the viral loop */}
+          <MultiEmailInput
+            emails={assignedEmails}
+            onAdd={handleAddEmail}
+            onRemove={handleRemoveEmail}
+            isAssigning={isAssigning}
+          />
         </div>
 
         {/* Right: timestamp / due date */}

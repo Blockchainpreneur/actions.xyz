@@ -23,6 +23,7 @@ export interface ActionItem {
   assigneeInitial?: string
   assigneeColor?: string
   assigneeEmail?: string
+  assigneeEmails?: string[]
   priority: Priority
   tag?: Tag
   sourceText?: string
