@@ -100,16 +100,16 @@ Keep tasks separate when:
 • Similar topic but genuinely different actions (e.g., "write tests" vs "fix the bug")
 
 ━━━ TASK 3: ENRICHMENT ━━━
-For every action item that survives (not in removeIds), write a final description using the complete transcript.
+For every action item that survives (not in removeIds), write a RICH final description using the complete transcript. Structure each description as:
 
-Description (300-400 chars):
-1. Exactly what needs to be done — specific, no vague verbs
-2. Why it was raised — the problem, decision, or blocker that triggered it
-3. Any deadline, dependency, or constraint mentioned anywhere in the meeting
-4. Who is waiting on this, what breaks if it's late
+CONTEXT: 2-3 sentences on why this was raised, who is affected, what happens if it's not done (use specific details from the transcript)
+STEPS: 3-6 numbered concrete implementation steps (specific actions, not vague verbs)
+FLOW: A text diagram showing the process using arrows and boxes — e.g. [Input] → [Process] → [Output] → [Result]
+
+Total description: 500-800 chars. Anyone reading the task should understand what to do, why, and how — without needing to watch the recording.
 
 Also fix per item:
-• Title: too vague → be specific, ≤ 10 words
+• Title: too vague → be specific, max 10 words
 • Priority: reassess with full context (blocks launch? → high)
 • dueDate: fill in if any deadline was mentioned anywhere in transcript
 • tag: correct if full context reveals better category
@@ -123,7 +123,7 @@ Valid JSON only, no markdown:
     {
       "id": "exact-id-from-input",
       "text": "Improved title (omit field if unchanged)",
-      "description": "300-400 char enriched description",
+      "description": "500-800 char rich description with CONTEXT + STEPS + FLOW",
       "priority": "high|med|low (omit field if unchanged)",
       "dueDate": "natural language (omit field if not mentioned in transcript)",
       "tag": "engineering|design|data|ops|content|product|automated (omit field if unchanged)"

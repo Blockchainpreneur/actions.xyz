@@ -176,19 +176,7 @@ export function ActionCard({ action, onMove, onDelete, onUpdateEmail, onAssignEm
             </span>
           </button>
           {expanded && (
-            <p
-              style={{
-                fontSize: 11,
-                lineHeight: 1.65,
-                color: 'var(--text-secondary)',
-                paddingLeft: 10,
-                paddingTop: 5,
-                paddingBottom: 5,
-                borderLeft: '2px solid var(--border-accent)',
-              }}
-            >
-              {action.description}
-            </p>
+            <TaskDescription text={action.description} />
           )}
         </div>
       )}
@@ -271,6 +259,96 @@ export function ActionCard({ action, onMove, onDelete, onUpdateEmail, onAssignEm
           {isDone ? '✓ done' : (action.dueDate ?? relativeTime(action.createdAt))}
         </span>
       </div>
+    </div>
+  )
+}
+
+// Renders structured description with CONTEXT / STEPS / FLOW sections
+function TaskDescription({ text }: { text: string }) {
+  // Parse sections
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+  const sections: { type: 'context' | 'steps' | 'flow' | 'text'; content: string[] }[] = []
+  let current: typeof sections[0] = { type: 'text', content: [] }
+
+  for (const line of lines) {
+    const upper = line.toUpperCase()
+    if (upper.startsWith('CONTEXT:')) {
+      if (current.content.length) sections.push(current)
+      current = { type: 'context', content: [line.replace(/^CONTEXT:\s*/i, '')] }
+    } else if (upper.startsWith('STEPS:')) {
+      if (current.content.length) sections.push(current)
+      current = { type: 'steps', content: [] }
+    } else if (upper.startsWith('FLOW:')) {
+      if (current.content.length) sections.push(current)
+      current = { type: 'flow', content: [line.replace(/^FLOW:\s*/i, '')] }
+    } else {
+      current.content.push(line)
+    }
+  }
+  if (current.content.length) sections.push(current)
+
+  // If no structured sections found, render as plain text
+  if (sections.length === 1 && sections[0].type === 'text') {
+    return (
+      <p style={{ fontSize: 11, lineHeight: 1.65, color: 'var(--text-secondary)', paddingLeft: 10, paddingTop: 5, paddingBottom: 5, borderLeft: '2px solid var(--border-accent)' }}>
+        {text}
+      </p>
+    )
+  }
+
+  return (
+    <div style={{ paddingLeft: 10, paddingTop: 4, paddingBottom: 4, borderLeft: '2px solid var(--border-accent)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {sections.map((sec, i) => {
+        if (sec.type === 'context') {
+          return (
+            <p key={i} style={{ fontSize: 11, lineHeight: 1.65, color: 'var(--text-secondary)' }}>
+              {sec.content.join(' ')}
+            </p>
+          )
+        }
+        if (sec.type === 'steps') {
+          return (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {sec.content.map((step, j) => (
+                <div key={j} className="flex gap-1.5 items-start" style={{ fontSize: 10, lineHeight: 1.5 }}>
+                  <span style={{ color: 'var(--teal-400)', fontFamily: 'var(--font-mono)', fontSize: 9, flexShrink: 0, marginTop: 1 }}>
+                    {step.match(/^\d+\./) ? step.match(/^\d+\./)?.[0] : `${j + 1}.`}
+                  </span>
+                  <span style={{ color: 'var(--text-secondary)' }}>
+                    {step.replace(/^\d+\.\s*/, '')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )
+        }
+        if (sec.type === 'flow') {
+          return (
+            <div
+              key={i}
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 9,
+                lineHeight: 1.6,
+                color: 'var(--cyan-400)',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 4,
+                padding: '5px 8px',
+                overflowX: 'auto',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {sec.content.join(' ')}
+            </div>
+          )
+        }
+        return (
+          <p key={i} style={{ fontSize: 11, lineHeight: 1.65, color: 'var(--text-secondary)' }}>
+            {sec.content.join(' ')}
+          </p>
+        )
+      })}
     </div>
   )
 }

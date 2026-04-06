@@ -61,13 +61,24 @@ ASSIGNEE RULES:
 
 ---
 DESCRIPTION RULE — this is critical:
-Write a description of 300-400 characters. Include ALL of:
-1. Exactly what needs to happen (specific, not vague)
-2. Why it was raised or what problem it solves
-3. Any constraints, dependencies, or context from the conversation
-4. Who else is involved or affected (if mentioned)
-Example of BAD description (too short): "Fix the login bug that was mentioned."
-Example of GOOD description (300-400 chars): "Investigate and fix the authentication bug causing users to be logged out after 10 minutes on mobile devices. This was raised by Sarah after customer reports came in this morning. The fix needs to go out before the Monday release. Check if it's related to the JWT token refresh logic that was changed last sprint."
+Write a rich description of 500-800 characters using this structure:
+
+CONTEXT: Why this was raised, what problem it solves, who is affected (2-3 sentences)
+STEPS: Numbered implementation steps (3-5 concrete steps)
+FLOW: A simple text diagram showing the process or data flow using arrows (→) and boxes ([])
+
+Example of BAD description: "Fix the login bug that was mentioned."
+Example of GOOD description:
+"CONTEXT: Users on mobile are being logged out after 10 minutes. Sarah flagged this after customer reports came in this morning. The fix must ship before the Monday release.
+
+STEPS:
+1. Check JWT token refresh logic changed last sprint
+2. Reproduce on mobile Safari + Chrome
+3. Fix the token expiry window (currently 10min, should be 24h)
+4. Add refresh token rotation as fallback
+5. QA on iOS + Android before merge
+
+FLOW: [User Login] → [JWT issued 10min] → [Token expires] → [No refresh] → [Logout] ← FIX: extend expiry + add refresh rotation"
 
 ---
 FEW-SHOT EXAMPLES:
@@ -75,15 +86,15 @@ FEW-SHOT EXAMPLES:
 Input: "Yeah so Marcus I need you to send the updated pricing doc to the enterprise clients before Thursday. Also the API docs are still outdated from the v2 migration, someone needs to update those."
 Output:
 {"actions":[
-  {"task":"Send updated pricing doc to enterprise clients","description":"Marcus to send the revised pricing documentation to all enterprise clients before Thursday. This was flagged as urgent as several enterprise accounts are waiting on the updated pricing to make renewal decisions. Ensure the new tier pricing and volume discounts are reflected in the document sent out.","assignee":"Marcus","assigneeType":"human","priority":"high","tag":"ops","dueDate":"Thursday"},
-  {"task":"Update API docs for v2 migration","description":"The API documentation is still showing v1 endpoints and schemas since the v2 migration. This needs to be updated so that external developers and partners can correctly integrate with the new API. No specific owner was assigned — needs someone from the engineering or product team to pick this up.","assignee":"Unassigned","assigneeType":"human","priority":"med","tag":"engineering"}
+  {"task":"Send updated pricing doc to enterprise clients","description":"CONTEXT: Several enterprise accounts are holding renewal decisions pending the updated pricing. Marcus needs to send the revised doc before Thursday.\n\nSTEPS:\n1. Pull the latest pricing tiers from the finance sheet\n2. Update the enterprise pricing PDF with new volume discounts\n3. Email to all enterprise accounts on the renewal list\n4. CC the account managers for follow-up\n\nFLOW: [Finance Sheet] → [Update PDF] → [Email to Clients] → [Account Managers CC'd] → [Renewal Decisions]","assignee":"Marcus","assigneeType":"human","priority":"high","tag":"ops","dueDate":"Thursday"},
+  {"task":"Update API docs for v2 migration","description":"CONTEXT: API documentation still shows v1 endpoints and schemas after the v2 migration. External developers and partners can't integrate correctly with the new API.\n\nSTEPS:\n1. Audit all v1 endpoints that changed in v2\n2. Update request/response schemas in the docs\n3. Add migration notes for breaking changes\n4. Review with engineering lead before publishing\n5. Notify partner developers of the update\n\nFLOW: [v1 Docs] → [Audit Changes] → [Update Schemas] → [Review] → [Publish v2 Docs] → [Notify Partners]","assignee":"Unassigned","assigneeType":"human","priority":"med","tag":"engineering"}
 ],"participants":["Marcus"]}
 
 Input: "Let's auto-generate the weekly performance report and email it to the stakeholders every Monday morning. And we decided to go with Postgres over MongoDB."
 Output:
 {"actions":[
-  {"task":"Auto-generate and email weekly performance report","description":"Set up an automated job to generate the weekly performance report and email it to all stakeholders every Monday morning. The team agreed this should replace the manual process that's been taking 2 hours each week. The report should include the KPIs discussed: DAU, retention, and revenue metrics. Needs to be scheduled via cron or a workflow tool.","assignee":"AI Agent","assigneeType":"agent","priority":"med","tag":"automated"},
-  {"task":"Migrate database to Postgres","description":"The team decided to move forward with Postgres instead of MongoDB. This decision was made based on the need for relational data integrity and better support for complex queries in the analytics pipeline. Next step is to plan the migration, assess schema changes, and set a timeline. This will affect all services currently reading from the MongoDB instance.","assignee":"Unassigned","assigneeType":"human","priority":"high","tag":"engineering"}
+  {"task":"Auto-generate weekly performance report","description":"CONTEXT: The team spends 2 hours manually creating the weekly report. Automating this frees up time and ensures consistency. Should include DAU, retention, and revenue KPIs.\n\nSTEPS:\n1. Set up data queries for DAU, retention, revenue metrics\n2. Build report template with charts\n3. Schedule cron job for Monday 8am\n4. Configure email delivery to stakeholder list\n5. Add error alerting if generation fails\n\nFLOW: [Cron Monday 8am] → [Query Metrics DB] → [Generate Report] → [Email to Stakeholders]","assignee":"AI Agent","assigneeType":"agent","priority":"med","tag":"automated"},
+  {"task":"Migrate database to Postgres","description":"CONTEXT: Team chose Postgres over MongoDB for relational integrity and complex analytics queries. All services reading from MongoDB will be affected.\n\nSTEPS:\n1. Map MongoDB collections to Postgres tables/schemas\n2. Write migration scripts with data validation\n3. Set up Postgres staging instance\n4. Run parallel reads to verify data parity\n5. Cut over services one by one, starting with read-only\n6. Decommission MongoDB after 2-week validation\n\nFLOW: [MongoDB] → [Migration Scripts] → [Postgres Staging] → [Parallel Reads] → [Service Cutover] → [Decommission Mongo]","assignee":"Unassigned","assigneeType":"human","priority":"high","tag":"engineering"}
 ],"participants":[]}
 
 Input: "okay sounds good, yeah I think so too"
@@ -91,7 +102,7 @@ Output: {"actions":[],"participants":[]}
 
 ---
 Respond ONLY with valid JSON — no markdown, no explanation, no extra text:
-{"actions":[{"task":"short title max 8 words","description":"300-400 character context description","assignee":"Name or Unassigned","assigneeType":"human","priority":"high|med|low","tag":"engineering|design|data|ops|content|product|automated","dueDate":"optional natural language date"}],"participants":["Name1","Name2"]}
+{"actions":[{"task":"short title max 8 words","description":"500-800 char rich description with CONTEXT + STEPS + FLOW sections","assignee":"Name or Unassigned","assigneeType":"human","priority":"high|med|low","tag":"engineering|design|data|ops|content|product|automated","dueDate":"optional natural language date"}],"participants":["Name1","Name2"]}
 
 Return {"actions":[],"participants":[]} if there is truly nothing actionable.`
 
@@ -109,7 +120,7 @@ Return {"actions":[],"participants":[]} if there is truly nothing actionable.`
         },
       ],
       temperature: 0.1,
-      max_tokens: 2048,
+      max_tokens: 4096,
     })
 
     const rawText = response.choices[0]?.message?.content?.trim() ?? ''
