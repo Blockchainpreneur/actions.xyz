@@ -38,32 +38,22 @@ export function PipelineColumn({ status, actions, newestActionId, onMove, onDele
 
   const isEmpty = actions.length === 0
 
-  // Empty columns collapse to a thin strip
+  // Empty columns show as compact but readable
   if (isEmpty) {
     return (
-      <div
-        className="flex flex-col items-center flex-shrink-0 rounded-md"
-        style={{
-          width: 48,
-          padding: '8px 0',
-          opacity: 0.4,
-        }}
-      >
-        <div style={{ height: 1.5, width: '100%', background: config.textColor, opacity: 0.3, borderRadius: 1, marginBottom: 8 }} />
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 8,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: config.textColor,
-            writingMode: 'vertical-rl',
-            textOrientation: 'mixed',
-          }}
-        >
+      <div className="flex flex-col flex-shrink-0" style={{ width: 120 }}>
+        <div style={{ height: 1.5, background: config.textColor, opacity: 0.25, borderRadius: 1, marginBottom: 6 }} />
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: config.textColor, opacity: 0.4, marginBottom: 8 }}>
           {config.label}
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: config.textColor, marginTop: 4, opacity: 0.5 }}>0</span>
+        <div
+          className="flex items-center justify-center rounded-md"
+          style={{ padding: '16px 0', border: `1px dashed ${config.borderColor}`, opacity: 0.5 }}
+        >
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+            No tasks
+          </span>
+        </div>
       </div>
     )
   }

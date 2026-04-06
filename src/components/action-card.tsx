@@ -218,7 +218,7 @@ export function ActionCard({ action, onMove, onDelete, onUpdateEmail, onAssignEm
             <>
               <ParticipantAvatar
                 name={action.assigneeName}
-                initial={action.assigneeInitial ?? '?'}
+                initial={action.assigneeName === 'Unassigned' ? '?' : (action.assigneeInitial || action.assigneeName[0]?.toUpperCase() || '?')}
                 colorKey={action.assigneeColor ?? 'indigo'}
                 isAgent={action.assigneeType === 'agent'}
                 size="xs"

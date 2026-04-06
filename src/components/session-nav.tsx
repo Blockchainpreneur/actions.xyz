@@ -47,6 +47,21 @@ export function SessionNav({
 }: SessionNavProps) {
   const { data: authSession } = useSession()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close user menu on click outside or Escape
+  useEffect(() => {
+    if (!showUserMenu) return
+    function handleClick(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setShowUserMenu(false)
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setShowUserMenu(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => { document.removeEventListener('mousedown', handleClick); document.removeEventListener('keydown', handleKey) }
+  }, [showUserMenu])
   const [editingName, setEditingName] = useState(false)
   const [nameValue, setNameValue] = useState('')
   const [addingParticipant, setAddingParticipant] = useState(false)
@@ -100,8 +115,13 @@ export function SessionNav({
         <button
           onClick={onToggleSidebar}
           className="btn-press flex items-center justify-center rounded-md"
-          style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
-          title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+          style={{
+            width: 28, height: 28, cursor: 'pointer',
+            background: sidebarCollapsed ? 'var(--surface-3)' : 'transparent',
+            border: sidebarCollapsed ? '1px solid var(--border-subtle)' : 'none',
+            color: sidebarCollapsed ? 'var(--text-primary)' : 'var(--text-muted)',
+          }}
+          title={sidebarCollapsed ? 'Show meetings' : 'Hide meetings'}
         >
           {sidebarCollapsed ? <PanelLeft size={14} /> : <PanelLeftClose size={14} />}
         </button>
@@ -228,7 +248,7 @@ export function SessionNav({
       {/* Right — user + theme + record */}
       <div className="flex items-center gap-2" style={{ flex: '0 0 auto' }}>
         {/* User menu */}
-        <div className="relative">
+        <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setShowUserMenu(v => !v)}
             className="btn-press flex items-center justify-center rounded-md"
@@ -245,7 +265,7 @@ export function SessionNav({
             <div
               className="absolute top-full right-0 mt-1 animate-slide-up"
               style={{ width: 200, padding: 6, borderRadius: 10, background: 'var(--gray-800)', border: '1px solid var(--border-accent)', boxShadow: '0 12px 40px rgba(0,0,0,0.6)', zIndex: 60 }}
-              onMouseLeave={() => setShowUserMenu(false)}
+              role="menu"
             >
               {authSession?.user?.email && (
                 <div style={{ padding: '6px 10px', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', borderBottom: '1px solid var(--border-subtle)', marginBottom: 4 }}>
@@ -254,6 +274,7 @@ export function SessionNav({
               )}
               <a
                 href="/dashboard"
+                onClick={() => setShowUserMenu(false)}
                 className="flex items-center gap-2 rounded-md"
                 style={{ padding: '6px 10px', fontSize: 12, color: 'var(--text-secondary)', textDecoration: 'none', cursor: 'pointer' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-3)')}
