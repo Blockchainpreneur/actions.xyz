@@ -83,14 +83,19 @@ export default function Home() {
   }, [addKeyPoints])
 
   // Assign emails to a task — calls the DB API which creates ghost users + sends emails
-  // Also auto-moves the task to "assigned" locally
+  // Also auto-moves task to "assigned" + updates assignee name locally
   const handleAssignEmails = useCallback(async (taskId: string, emails: string[]) => {
-    // Optimistic: move to assigned immediately
+    if (!emails.length) return
+    const firstEmail = emails[0]
+
+    // Optimistic: update assignee name + move to assigned
+    updateActionEmail(taskId, firstEmail)
     const action = meetingSessionRef.current?.actions.find(a => a.id === taskId)
-    if (action && action.status === 'actions') {
-      moveAction(taskId, 'assigned')
+    if (action) {
+      if (action.status === 'actions') moveAction(taskId, 'assigned')
     }
 
+    // Call DB API — creates ghost user + sends notification email
     try {
       await fetch(`/api/db/tasks/${taskId}/assign`, {
         method: 'POST',
@@ -98,7 +103,7 @@ export default function Home() {
         body: JSON.stringify({ emails }),
       })
     } catch { /* best effort */ }
-  }, [moveAction])
+  }, [moveAction, updateActionEmail])
 
   if (!meetingSession) {
     return (

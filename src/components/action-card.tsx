@@ -215,36 +215,47 @@ export function ActionCard({ action, onMove, onDelete, onUpdateEmail, onAssignEm
 
       {/* Footer — consolidated assignee + email + timestamp */}
       <div className="flex items-center justify-between gap-2 mt-1">
-        {/* Left: assignee + email (integrated) */}
-        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-          <ParticipantAvatar
-            name={action.assigneeName}
-            initial={action.assigneeInitial ?? '?'}
-            colorKey={action.assigneeColor ?? 'indigo'}
-            isAgent={action.assigneeType === 'agent'}
-            size="xs"
-          />
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 500,
-              color: 'var(--text-secondary)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: 80,
-            }}
-          >
-            {action.assigneeName}
-          </span>
-
-          {/* Multi-email assignment — the viral loop */}
-          <MultiEmailInput
-            emails={assignedEmails}
-            onAdd={handleAddEmail}
-            onRemove={handleRemoveEmail}
-            isAssigning={isAssigning}
-          />
+        {/* Left: assignee display + multi-email input */}
+        <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">
+          {assignedEmails.length > 0 ? (
+            /* Show assigned emails/names as the owners */
+            <MultiEmailInput
+              emails={assignedEmails}
+              onAdd={handleAddEmail}
+              onRemove={handleRemoveEmail}
+              isAssigning={isAssigning}
+            />
+          ) : (
+            /* No one assigned yet — show original assignee + assign button */
+            <>
+              <ParticipantAvatar
+                name={action.assigneeName}
+                initial={action.assigneeInitial ?? '?'}
+                colorKey={action.assigneeColor ?? 'indigo'}
+                isAgent={action.assigneeType === 'agent'}
+                size="xs"
+              />
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: action.assigneeName === 'Unassigned' ? 'var(--text-muted)' : 'var(--text-secondary)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: 70,
+                }}
+              >
+                {action.assigneeName}
+              </span>
+              <MultiEmailInput
+                emails={[]}
+                onAdd={handleAddEmail}
+                onRemove={handleRemoveEmail}
+                isAssigning={isAssigning}
+              />
+            </>
+          )}
         </div>
 
         {/* Right: timestamp / due date */}

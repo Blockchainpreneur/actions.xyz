@@ -212,7 +212,23 @@ export function useActions() {
       if (!prev) return prev
       const updated = {
         ...prev,
-        actions: prev.actions.map(a => a.id === actionId ? { ...a, assigneeEmail: email } : a),
+        actions: prev.actions.map(a => {
+          if (a.id !== actionId) return a
+          if (email) {
+            // Update assignee to the email — shows as owner on the card
+            const existing = a.assigneeEmails ?? []
+            const emails = existing.includes(email) ? existing : [...existing, email]
+            return {
+              ...a,
+              assigneeEmail: email,
+              assigneeEmails: emails,
+              assigneeName: email.split('@')[0],
+              assigneeInitial: email[0].toUpperCase(),
+            }
+          }
+          // Clearing email
+          return { ...a, assigneeEmail: '', assigneeEmails: [], assigneeName: 'Unassigned', assigneeInitial: '?' }
+        }),
       }
       persistSession(SESSION_KEY, updated)
       return updated

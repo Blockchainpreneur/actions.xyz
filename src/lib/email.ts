@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
 
-const APP_URL = process.env.NEXTAUTH_URL || 'https://actionsxyz.vercel.app'
+// In production, NEXTAUTH_URL points to the Vercel domain
+// Fallback to the Vercel URL env var or hardcoded domain
+const APP_URL = process.env.NEXTAUTH_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://actionsxyz.vercel.app'
 
 // Lazy init — Resend throws if no API key at construction time
 let _resend: Resend | null = null
