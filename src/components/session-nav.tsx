@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Plus, Radio, Square, RefreshCw, Moon, Sun } from 'lucide-react'
+import { Plus, Radio, Square, RefreshCw, Moon, Sun, PanelLeftClose, PanelLeft, LogOut, User } from 'lucide-react'
+import { signOut, useSession } from 'next-auth/react'
 import { type Session } from '@/lib/types'
 import { ParticipantAvatar } from './participant-avatar'
 
@@ -14,6 +15,8 @@ interface SessionNavProps {
   onAddParticipant: (name: string) => void
   onUpdateName: (name: string) => void
   onNewSession: () => void
+  sidebarCollapsed: boolean
+  onToggleSidebar: () => void
 }
 
 function useTheme() {
@@ -40,7 +43,10 @@ export function SessionNav({
   session, isListening, isSupported,
   onStartRecording, onStopRecording,
   onAddParticipant, onUpdateName, onNewSession,
+  sidebarCollapsed, onToggleSidebar,
 }: SessionNavProps) {
+  const { data: authSession } = useSession()
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [nameValue, setNameValue] = useState('')
   const [addingParticipant, setAddingParticipant] = useState(false)
@@ -88,8 +94,18 @@ export function SessionNav({
         paddingRight: 16,
       }}
     >
-      {/* Left — logo + new */}
+      {/* Left — sidebar toggle + logo + new */}
       <div className="flex items-center gap-3" style={{ flex: '0 0 auto' }}>
+        {/* Sidebar toggle */}
+        <button
+          onClick={onToggleSidebar}
+          className="btn-press flex items-center justify-center rounded-md"
+          style={{ width: 28, height: 28, background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+          title={sidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+        >
+          {sidebarCollapsed ? <PanelLeft size={14} /> : <PanelLeftClose size={14} />}
+        </button>
+
         {/* Logo mark */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -209,8 +225,57 @@ export function SessionNav({
         </div>
       </div>
 
-      {/* Right — theme + record */}
+      {/* Right — user + theme + record */}
       <div className="flex items-center gap-2" style={{ flex: '0 0 auto' }}>
+        {/* User menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(v => !v)}
+            className="btn-press flex items-center justify-center rounded-md"
+            style={{ width: 30, height: 30, background: 'var(--surface-2)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)', cursor: 'pointer' }}
+            title={authSession?.user?.email || 'Account'}
+          >
+            {authSession?.user?.image ? (
+              <img src={authSession.user.image} alt="" style={{ width: 18, height: 18, borderRadius: '50%' }} />
+            ) : (
+              <User size={12} />
+            )}
+          </button>
+          {showUserMenu && (
+            <div
+              className="absolute top-full right-0 mt-1 animate-slide-up"
+              style={{ width: 200, padding: 6, borderRadius: 10, background: 'var(--gray-800)', border: '1px solid var(--border-accent)', boxShadow: '0 12px 40px rgba(0,0,0,0.6)', zIndex: 60 }}
+              onMouseLeave={() => setShowUserMenu(false)}
+            >
+              {authSession?.user?.email && (
+                <div style={{ padding: '6px 10px', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', borderBottom: '1px solid var(--border-subtle)', marginBottom: 4 }}>
+                  {authSession.user.email}
+                </div>
+              )}
+              <a
+                href="/dashboard"
+                className="flex items-center gap-2 rounded-md"
+                style={{ padding: '6px 10px', fontSize: 12, color: 'var(--text-secondary)', textDecoration: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-3)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <User size={11} />
+                My Tasks
+              </a>
+              <button
+                onClick={() => signOut()}
+                className="flex items-center gap-2 rounded-md w-full"
+                style={{ padding: '6px 10px', fontSize: 12, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-3)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <LogOut size={11} />
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={toggle}
           className="btn-press flex items-center justify-center rounded-md"

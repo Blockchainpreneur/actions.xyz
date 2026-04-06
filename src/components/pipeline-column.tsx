@@ -36,12 +36,44 @@ export function PipelineColumn({ status, actions, newestActionId, onMove, onDele
     })
   }, [actions])
 
-  return (
-    <div className="flex flex-col gap-2 flex-shrink-0" style={{ width: 272 }}>
-      {/* Top accent line — the only color, no background box */}
-      <div style={{ height: 1.5, background: config.textColor, opacity: 0.4, borderRadius: 1, marginBottom: 8 }} />
+  const isEmpty = actions.length === 0
 
-      <div className="flex items-center justify-between px-0.5 mb-1">
+  // Empty columns collapse to a thin strip
+  if (isEmpty) {
+    return (
+      <div
+        className="flex flex-col items-center flex-shrink-0 rounded-md"
+        style={{
+          width: 48,
+          padding: '8px 0',
+          opacity: 0.4,
+        }}
+      >
+        <div style={{ height: 1.5, width: '100%', background: config.textColor, opacity: 0.3, borderRadius: 1, marginBottom: 8 }} />
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 8,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: config.textColor,
+            writingMode: 'vertical-rl',
+            textOrientation: 'mixed',
+          }}
+        >
+          {config.label}
+        </span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: config.textColor, marginTop: 4, opacity: 0.5 }}>0</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 252 }}>
+      {/* Top accent line */}
+      <div style={{ height: 1.5, background: config.textColor, opacity: 0.4, borderRadius: 1, marginBottom: 6 }} />
+
+      <div className="flex items-center justify-between px-0.5 mb-0.5">
         <span
           style={{
             fontFamily: 'var(--font-mono)',
@@ -55,21 +87,19 @@ export function PipelineColumn({ status, actions, newestActionId, onMove, onDele
         >
           {config.label}
         </span>
-        {actions.length > 0 && (
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              color: config.textColor,
-              opacity: 0.4,
-            }}
-          >
-            {actions.length}
-          </span>
-        )}
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: config.textColor,
+            opacity: 0.4,
+          }}
+        >
+          {actions.length}
+        </span>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         {sorted.map(action => (
           <ActionCard
             key={action.id}
@@ -81,24 +111,6 @@ export function PipelineColumn({ status, actions, newestActionId, onMove, onDele
             isNew={action.id === newestActionId}
           />
         ))}
-        {actions.length === 0 && (
-          <div
-            className="flex flex-col items-center justify-center gap-2 py-10 rounded-lg"
-            style={{
-              border: `1px dashed ${config.borderColor}`,
-              color: 'var(--text-muted)',
-              background: config.color,
-            }}
-          >
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center"
-              style={{ border: `1px solid ${config.borderColor}`, color: config.textColor, opacity: 0.5 }}
-            >
-              {COLUMN_ICONS[status]}
-            </div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', opacity: 0.5 }}>empty</span>
-          </div>
-        )}
       </div>
     </div>
   )

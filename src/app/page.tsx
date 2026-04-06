@@ -36,6 +36,7 @@ export default function Home() {
   } = useActions()
 
   const [newestActionId, setNewestActionId] = useState<string | undefined>()
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const meetingSessionRef = useRef(meetingSession)
   meetingSessionRef.current = meetingSession
   // Ref so callbacks never go stale while accumulating key points
@@ -82,7 +83,14 @@ export default function Home() {
   }, [addKeyPoints])
 
   // Assign emails to a task — calls the DB API which creates ghost users + sends emails
+  // Also auto-moves the task to "assigned" locally
   const handleAssignEmails = useCallback(async (taskId: string, emails: string[]) => {
+    // Optimistic: move to assigned immediately
+    const action = meetingSessionRef.current?.actions.find(a => a.id === taskId)
+    if (action && action.status === 'actions') {
+      moveAction(taskId, 'assigned')
+    }
+
     try {
       await fetch(`/api/db/tasks/${taskId}/assign`, {
         method: 'POST',
@@ -90,7 +98,7 @@ export default function Home() {
         body: JSON.stringify({ emails }),
       })
     } catch { /* best effort */ }
-  }, [])
+  }, [moveAction])
 
   if (!meetingSession) {
     return (
@@ -120,6 +128,8 @@ export default function Home() {
             onAddParticipant={addParticipant}
             onUpdateName={updateSessionName}
             onNewSession={newSession}
+            sidebarCollapsed={sidebarCollapsed}
+            onToggleSidebar={() => setSidebarCollapsed(v => !v)}
           />
 
           {!isSupported && (
@@ -166,16 +176,10 @@ export default function Home() {
 
           <div className="flex flex-1 min-h-0">
             <TranscriptSidebar
-              keyPoints={keyPoints}
-              interimText={interimText}
               isListening={isListening}
               isExtracting={isExtracting}
               isSynthesizing={isSynthesizing}
-              onCreateActionFromPoint={(text) => {
-                const id = createActionFromPoint(text)
-                setNewestActionId(id)
-                setTimeout(() => setNewestActionId(undefined), 2000)
-              }}
+              interimText={interimText}
               meetings={meetings}
               isSignedIn={isSignedIn}
               hasCalendarAccess={hasCalendarAccess}
@@ -187,6 +191,7 @@ export default function Home() {
               onRefreshCalendar={refreshCalendar}
               userEmail={session?.user?.email}
               pastSessions={meetingSession ? [meetingSession, ...sessionHistory] : sessionHistory}
+              collapsed={sidebarCollapsed}
             />
             <PipelineBoard
               session={meetingSession}

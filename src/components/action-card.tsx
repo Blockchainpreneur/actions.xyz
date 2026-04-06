@@ -82,7 +82,7 @@ export function ActionCard({ action, onMove, onDelete, onUpdateEmail, onAssignEm
     <div
       className={`group relative rounded-lg cursor-pointer ${isNew ? 'animate-card-enter' : ''}`}
       style={{
-        padding: '11px 13px',
+        padding: '9px 11px',
         background: 'var(--surface-1)',
         border: '1px solid var(--border-subtle)',
         /* Left priority border + inset highlight + diffusion shadow */
