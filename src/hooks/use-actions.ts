@@ -61,8 +61,18 @@ export function useActions() {
     setSessionHistory(hist)
   }, [])
 
+  // Queue for extraction requests that arrive while one is in-flight
+  const extractQueueRef = useRef<{ text: string; participants: Participant[]; context: string; existingPoints: string[] }[]>([])
+
   const extractActionsFromText = useCallback(async (text: string, participants: Participant[], context = '', existingPoints: string[] = []) => {
-    if (!text.trim() || isExtractingRef.current) return
+    if (!text.trim()) return
+
+    // If already extracting, queue this request instead of dropping it
+    if (isExtractingRef.current) {
+      extractQueueRef.current.push({ text, participants, context, existingPoints })
+      return
+    }
+
     isExtractingRef.current = true
     setIsExtracting(true)
 
@@ -155,9 +165,23 @@ export function useActions() {
       setExtractError(err instanceof Error ? err.message : 'Extract failed')
     } finally {
       isExtractingRef.current = false
-      setIsExtracting(false)
+
+      // Process queued extraction requests
+      const next = extractQueueRef.current.shift()
+      if (next) {
+        // Merge any remaining queued items into one combined request
+        let combinedText = next.text
+        while (extractQueueRef.current.length > 0) {
+          const more = extractQueueRef.current.shift()!
+          combinedText += ' ' + more.text
+        }
+        // Don't await — let it run as the next extraction cycle
+        extractActionsFromText(combinedText, next.participants, next.context, next.existingPoints)
+      } else {
+        setIsExtracting(false)
+      }
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps — self-referential is intentional
 
   const addTranscriptLine = useCallback((text: string, participantId?: string) => {
     setSession(prev => {

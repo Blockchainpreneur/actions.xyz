@@ -3,9 +3,10 @@
 import { useCallback, useRef } from 'react'
 import { useSpeech } from '@/hooks/use-speech'
 
-const EXTRACT_BUFFER_MS = 3000  // wait 3 seconds of silence — lets complete thoughts form
-const MIN_EXTRACT_LENGTH = 40   // skip tiny fragments (filler words, single phrases)
+const EXTRACT_BUFFER_MS = 2000  // wait 2 seconds of silence — shorter for real meetings
+const MIN_EXTRACT_LENGTH = 30   // lower threshold to catch more speech segments
 const CONTEXT_WINDOW_CHARS = 1500 // rolling context: last N chars of finalized transcript
+const MAX_BUFFER_AGE_MS = 15000  // force extraction every 15s even if user keeps talking
 
 interface MeetingListenerProps {
   onTranscriptLine: (text: string) => void
@@ -23,7 +24,9 @@ interface MeetingListenerProps {
 
 export function MeetingListener({ onTranscriptLine, onExtractRequest, onSummarizeRequest, children }: MeetingListenerProps) {
   const extractTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const maxAgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingBufferRef = useRef<string>('')
+  const bufferStartTimeRef = useRef<number>(0)
   // Rolling context: last CONTEXT_WINDOW_CHARS of confirmed transcript
   const contextBufferRef = useRef<string>('')
 
@@ -35,12 +38,9 @@ export function MeetingListener({ onTranscriptLine, onExtractRequest, onSummariz
   const onSummarizeRequestRef = useRef(onSummarizeRequest)
   onSummarizeRequestRef.current = onSummarizeRequest
 
-  // Flush any pending buffer immediately (called before synthesis)
-  const flushPendingBuffer = useCallback(() => {
-    if (extractTimerRef.current) {
-      clearTimeout(extractTimerRef.current)
-      extractTimerRef.current = null
-    }
+  const doExtract = useCallback(() => {
+    if (extractTimerRef.current) { clearTimeout(extractTimerRef.current); extractTimerRef.current = null }
+    if (maxAgeTimerRef.current) { clearTimeout(maxAgeTimerRef.current); maxAgeTimerRef.current = null }
     const buf = pendingBufferRef.current.trim()
     if (buf && buf.length >= MIN_EXTRACT_LENGTH) {
       const ctx = contextBufferRef.current.trim()
@@ -50,27 +50,39 @@ export function MeetingListener({ onTranscriptLine, onExtractRequest, onSummariz
       contextBufferRef.current = combined.slice(-CONTEXT_WINDOW_CHARS)
     }
     pendingBufferRef.current = ''
+    bufferStartTimeRef.current = 0
   }, [])
+
+  // Flush any pending buffer immediately (called when recording stops)
+  const flushPendingBuffer = useCallback(() => {
+    doExtract()
+  }, [doExtract])
 
   const scheduleExtract = useCallback((text: string) => {
     pendingBufferRef.current += ' ' + text
 
+    // Track when buffer started accumulating
+    if (!bufferStartTimeRef.current) bufferStartTimeRef.current = Date.now()
+
     if (extractTimerRef.current) clearTimeout(extractTimerRef.current)
 
-    if (pendingBufferRef.current.trim().length >= MIN_EXTRACT_LENGTH) {
-      extractTimerRef.current = setTimeout(() => {
-        const buf = pendingBufferRef.current.trim()
-        if (buf) {
-          const ctx = contextBufferRef.current.trim()
-          onExtractRequestRef.current(buf, ctx)
-          onSummarizeRequestRef.current(buf, ctx)
-          const combined = (ctx + ' ' + buf).trim()
-          contextBufferRef.current = combined.slice(-CONTEXT_WINDOW_CHARS)
-          pendingBufferRef.current = ''
-        }
-      }, EXTRACT_BUFFER_MS)
+    // Force extraction if buffer has been accumulating too long (nonstop talking)
+    const bufferAge = Date.now() - bufferStartTimeRef.current
+    if (bufferAge >= MAX_BUFFER_AGE_MS) {
+      doExtract()
+      return
     }
-  }, [])
+
+    // Schedule extraction after silence
+    if (pendingBufferRef.current.trim().length >= MIN_EXTRACT_LENGTH) {
+      extractTimerRef.current = setTimeout(doExtract, EXTRACT_BUFFER_MS)
+
+      // Also set a max-age timer as fallback
+      if (!maxAgeTimerRef.current) {
+        maxAgeTimerRef.current = setTimeout(doExtract, MAX_BUFFER_AGE_MS - bufferAge)
+      }
+    }
+  }, [doExtract])
 
   const handleTranscript = useCallback((text: string, isFinal: boolean) => {
     if (!isFinal) return
