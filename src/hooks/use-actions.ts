@@ -328,7 +328,7 @@ export function useActions() {
         name: 'New Meeting',
         startedAt: Date.now(),
         participants: prev?.participants ?? [],
-        actions: prev?.actions ?? [],
+        actions: [],  // Clean slate — old actions are archived in the history
         transcript: [],
         keyPoints: [],
       }
@@ -338,9 +338,13 @@ export function useActions() {
   }, [])
 
   // Called when recording stops — runs a final synthesis pass over the full transcript
+  // Guards against race condition: only applies results if session hasn't changed
   const synthesizeSession = useCallback(async () => {
     const current = sessionRef.current
     if (!current || current.transcript.length < 3) return
+
+    // Capture the session ID at the START — we'll check it hasn't changed before applying
+    const synthesizingSessionId = current.id
 
     setIsSynthesizing(true)
     try {
@@ -389,15 +393,25 @@ export function useActions() {
         setKeyPoints(data.keyPoints)
       }
 
-      // Apply deduplication + patches in a single state update
+      // Apply deduplication + patches ONLY if session hasn't changed
       setSession(prev => {
         if (!prev) return prev
+
+        // RACE GUARD: if session changed while we were synthesizing, abort
+        if (prev.id !== synthesizingSessionId) {
+          console.log('[synthesize] Session changed during synthesis, skipping patches')
+          return prev
+        }
 
         const removeSet = new Set<string>(data.removeIds ?? [])
         const patchMap = new Map((data.actionPatches ?? []).map(p => [p.id, p]))
 
+        // Only remove IDs that actually exist in the current session's action IDs
+        const currentIds = new Set(prev.actions.map(a => a.id))
+        const safeRemoveSet = new Set([...removeSet].filter(id => currentIds.has(id)))
+
         const updatedActions = prev.actions
-          .filter(a => !removeSet.has(a.id))
+          .filter(a => !safeRemoveSet.has(a.id))
           .map(a => {
             const patch = patchMap.get(a.id)
             if (!patch) return a

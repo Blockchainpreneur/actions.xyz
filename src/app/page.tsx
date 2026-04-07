@@ -129,7 +129,11 @@ export default function Home() {
             isListening={isListening}
             isSupported={isSupported}
             onStartRecording={startListening}
-            onStopRecording={() => { stopListening(); synthesizeSession() }}
+            onStopRecording={() => {
+              stopListening()  // flushes pending buffer → triggers final extraction
+              // Delay synthesis so the last extraction completes first
+              setTimeout(() => synthesizeSession(), 4000)
+            }}
             onAddParticipant={addParticipant}
             onUpdateName={updateSessionName}
             onNewSession={newSession}

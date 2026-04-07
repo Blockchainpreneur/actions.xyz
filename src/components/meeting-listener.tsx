@@ -25,7 +25,6 @@ export function MeetingListener({ onTranscriptLine, onExtractRequest, onSummariz
   const extractTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingBufferRef = useRef<string>('')
   // Rolling context: last CONTEXT_WINDOW_CHARS of confirmed transcript
-  // Sent alongside the current buffer so both APIs have full conversational context
   const contextBufferRef = useRef<string>('')
 
   // Always-current refs — stable callbacks don't go stale
@@ -35,6 +34,23 @@ export function MeetingListener({ onTranscriptLine, onExtractRequest, onSummariz
   onExtractRequestRef.current = onExtractRequest
   const onSummarizeRequestRef = useRef(onSummarizeRequest)
   onSummarizeRequestRef.current = onSummarizeRequest
+
+  // Flush any pending buffer immediately (called before synthesis)
+  const flushPendingBuffer = useCallback(() => {
+    if (extractTimerRef.current) {
+      clearTimeout(extractTimerRef.current)
+      extractTimerRef.current = null
+    }
+    const buf = pendingBufferRef.current.trim()
+    if (buf && buf.length >= MIN_EXTRACT_LENGTH) {
+      const ctx = contextBufferRef.current.trim()
+      onExtractRequestRef.current(buf, ctx)
+      onSummarizeRequestRef.current(buf, ctx)
+      const combined = (ctx + ' ' + buf).trim()
+      contextBufferRef.current = combined.slice(-CONTEXT_WINDOW_CHARS)
+    }
+    pendingBufferRef.current = ''
+  }, [])
 
   const scheduleExtract = useCallback((text: string) => {
     pendingBufferRef.current += ' ' + text
@@ -48,24 +64,29 @@ export function MeetingListener({ onTranscriptLine, onExtractRequest, onSummariz
           const ctx = contextBufferRef.current.trim()
           onExtractRequestRef.current(buf, ctx)
           onSummarizeRequestRef.current(buf, ctx)
-          // Roll context forward: append buf, keep last CONTEXT_WINDOW_CHARS
           const combined = (ctx + ' ' + buf).trim()
           contextBufferRef.current = combined.slice(-CONTEXT_WINDOW_CHARS)
           pendingBufferRef.current = ''
         }
       }, EXTRACT_BUFFER_MS)
     }
-  }, []) // stable — reads from refs
+  }, [])
 
   const handleTranscript = useCallback((text: string, isFinal: boolean) => {
     if (!isFinal) return
     onTranscriptLineRef.current(text)
     scheduleExtract(text)
-  }, [scheduleExtract]) // scheduleExtract is stable
+  }, [scheduleExtract])
 
   const speech = useSpeech({
     onTranscript: handleTranscript,
   })
 
-  return <>{children(speech)}</>
+  // Wrap stopListening to flush buffer first
+  const wrappedStopListening = useCallback(() => {
+    flushPendingBuffer()
+    speech.stopListening()
+  }, [flushPendingBuffer, speech.stopListening])
+
+  return <>{children({ ...speech, stopListening: wrappedStopListening })}</>
 }
