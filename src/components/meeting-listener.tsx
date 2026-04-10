@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react'
 import { useSpeech } from '@/hooks/use-speech'
 
 const EXTRACT_BUFFER_MS = 2000  // wait 2 seconds of silence — shorter for real meetings
-const MIN_EXTRACT_LENGTH = 30   // lower threshold to catch more speech segments
+const MIN_EXTRACT_LENGTH = 20   // low threshold — let the LLM decide if it's actionable
 const CONTEXT_WINDOW_CHARS = 1500 // rolling context: last N chars of finalized transcript
 const MAX_BUFFER_AGE_MS = 15000  // force extraction every 15s even if user keeps talking
 

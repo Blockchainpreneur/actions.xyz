@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json() as { text: string; context?: string; existingPoints?: string[] }
   const { text, existingPoints = [] } = body
 
-  if (!text?.trim() || text.trim().length < 40) {
+  if (!text?.trim() || text.trim().length < 20) {
     return NextResponse.json({ points: [] })
   }
 
@@ -78,12 +78,22 @@ ${text}`,
     })
 
     const raw = response.choices[0]?.message?.content?.trim() ?? ''
-    const jsonText = raw.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim()
+    let jsonText = raw
+    if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
+    }
+    jsonText = jsonText.trim()
+    const jsonStart = jsonText.indexOf('{')
+    const jsonEnd = jsonText.lastIndexOf('}')
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      jsonText = jsonText.slice(jsonStart, jsonEnd + 1)
+    }
     const parsed = JSON.parse(jsonText) as { points: string[] }
     return NextResponse.json({
       points: Array.isArray(parsed.points) ? parsed.points.filter((p: unknown) => typeof p === 'string' && p.trim().length > 0) : [],
     })
-  } catch {
+  } catch (err) {
+    console.error('[summarize] failed:', err)
     return NextResponse.json({ points: [] })
   }
 }
