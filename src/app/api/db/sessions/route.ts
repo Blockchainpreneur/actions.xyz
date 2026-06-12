@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { getSupabase } from '@/lib/supabase'
+import { checkMeetingAllowance } from '@/lib/billing/subscription'
 
 export async function GET() {
   const supabase = getSupabase()
@@ -39,6 +40,21 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+  // Freemium gate: free plan = FREE_MEETING_LIMIT meetings per calendar month.
+  // Active subscribers pass through; infra errors fail open (never block creation).
+  const allowance = await checkMeetingAllowance(supabase, user.id)
+  if (!allowance.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Free plan limit reached',
+        code: 'meeting_limit_reached',
+        used: allowance.used,
+        limit: allowance.limit,
+      },
+      { status: 402 },
+    )
+  }
 
   const body = await req.json() as { name?: string; participants?: unknown[] }
 

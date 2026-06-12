@@ -7,6 +7,7 @@ import { useCalendar } from '@/hooks/use-calendar'
 import { useBot } from '@/hooks/use-bot'
 import { MeetingListener } from '@/components/meeting-listener'
 import { SessionNav } from '@/components/session-nav'
+import { UpgradeModal } from '@/components/upgrade-modal'
 import { TranscriptSidebar } from '@/components/transcript-sidebar'
 import { PipelineBoard } from '@/components/pipeline-board'
 import { generateId, getParticipantColor, nameToInitial } from '@/lib/utils'
@@ -37,6 +38,7 @@ export default function Home() {
 
   const [newestActionId, setNewestActionId] = useState<string | undefined>()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [upgradeLimit, setUpgradeLimit] = useState<number | null>(null)
   const meetingSessionRef = useRef(meetingSession)
   meetingSessionRef.current = meetingSession
   // Ref so callbacks never go stale while accumulating key points
@@ -105,6 +107,25 @@ export default function Home() {
     } catch { /* best effort */ }
   }, [moveAction, updateActionEmail])
 
+  // New meeting goes through the server first — it's both the usage ledger and
+  // the freemium gate (402 = free monthly limit reached → upgrade modal).
+  // Signed-out users (401) and infra errors fall back to local-only creation.
+  const handleNewSession = useCallback(async () => {
+    try {
+      const res = await fetch('/api/db/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'New Meeting' }),
+      })
+      if (res.status === 402) {
+        const data = await res.json().catch(() => ({})) as { limit?: number }
+        setUpgradeLimit(data.limit ?? 5)
+        return
+      }
+    } catch { /* offline — proceed locally */ }
+    newSession()
+  }, [newSession])
+
   if (!meetingSession) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -136,7 +157,7 @@ export default function Home() {
             }}
             onAddParticipant={addParticipant}
             onUpdateName={updateSessionName}
-            onNewSession={newSession}
+            onNewSession={handleNewSession}
             sidebarCollapsed={sidebarCollapsed}
             onToggleSidebar={() => setSidebarCollapsed(v => !v)}
           />
@@ -211,6 +232,12 @@ export default function Home() {
               onAssignEmails={handleAssignEmails}
             />
           </div>
+
+          <UpgradeModal
+            open={upgradeLimit !== null}
+            limit={upgradeLimit ?? undefined}
+            onClose={() => setUpgradeLimit(null)}
+          />
         </div>
       )}
     </MeetingListener>
