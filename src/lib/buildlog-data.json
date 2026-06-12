@@ -1,16 +1,107 @@
 {
-  "generated_at": "2026-06-12T22:08:58.137Z",
-  "human_blocked": 12,
+  "generated_at": "2026-06-12T23:48:58.908Z",
+  "human_blocked": 13,
   "stats": {
-    "commits_today": 22,
-    "additions": 9034,
-    "deletions": 156,
-    "e2e_tests": 104,
-    "cycles": 5,
-    "gates_closed": 15,
+    "commits_today": 25,
+    "additions": 9304,
+    "deletions": 187,
+    "e2e_tests": 106,
+    "cycles": 9,
+    "gates_closed": 18,
     "stalls": 8
   },
   "entries": [
+    {
+      "date": "2026-06-12",
+      "type": "C4-OBJ-3",
+      "text": "C4-OBJ-3 | 2/3 piezas SHIPPED: compare-CTAs→live board + telemetría ai_agent_call (27/27 E2E, main 2d3500e, deploy Ready); falta troll-proofing (agente ac8b62f6 corriendo)",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C4-OBJ-2",
+      "text": "C4-OBJ-2 | gate:CLOSED | pipeline verificado: merge 38ddb15 pushed + deploy Ready + sitemap live sirve actionsxyz.vercel.app (3 <loc> citados) + llms.txt 13 refs correctas con sección for-AI-agents. Glama listing ya confirmado antes.",
+      "failed": false,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "LOOP-TICK",
+      "text": "LOOP-TICK | ship pipeline geo-fix (btl2tqjlq) aún corriendo; repo ocupado, OBJ-3 en espera; sin respuestas del usuario. Cedo.",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C4-OBJ-2",
+      "text": "C4-OBJ-2 | geo-fix gates verdes (tsc clean, lint 34==baseline); ship pipeline corriendo en background (btl2tqjlq: build→merge→push→deploy→verify sitemap)",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C4-OBJ-1",
+      "text": "C4-OBJ-1 | gate:CLOSED | archive.org blast 13/13 saves 302 confirmados | C4-OBJ-2 | bug GEO crítico encontrado y en fix: sitemap/llms/layout servían dominio muerto actions.xyz → centralizado a env+vercel.app + agent-onboarding añadido a llms.txt (gates corriendo b13726mcj)",
+      "failed": false,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C4-OBJ-2",
+      "text": "C4-OBJ-2 | HITO: Glama API confirma listing de actions-xyz-mcp (auto-index vía topics) + mcp.so/server/actions-xyz-mcp → 200. Primer registry confirmado. Resta: llms.txt agent-onboarding + contador invocaciones + /demo (OBJ-3).",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C4-OBJ-1",
+      "text": "C4-OBJ-1 | archive blast lanzado (13 URLs + repo, log /tmp/archive-blast.log) | C4-OBJ-2 probe: glama/mcp.so consultados",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "CYCLE4-L0",
+      "text": "CYCLE4-L0 | 50/50 recibidas → clusters persistidos en cycle4-candidates.md → tribunal fusionado lanzado (a2e8ecc3, escribe cycle4-verdict.md). Al llegar: inyectar top-3 en GOALS.md y ejecutar OBJ-1.",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "CYCLE4-L0",
+      "text": "CYCLE4-L0 | bloque 16-30 recibido (a6354fad); esperando 31-50 (a0a24edf) → torneo.",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "CYCLE4-L0",
+      "text": "CYCLE4-L0 | bloque 1-15 recibido (a22e3398); esperando 16-30 y 31-50. Contexto cerca del auto-handoff — estado persistido protege continuidad.",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "CYCLE4-L0",
+      "text": "CYCLE4-L0 | lanzado: 3 generadores (a22e3398/a6354fad/a0a24edf), vector=primer usuario real + señal de demanda + multiplicar launch 5x. Verificado: PR #7960 OPEN/MERGEABLE, prod buildlog 200. Sin respuestas del usuario.",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "NOTE",
+      "text": "CICLO 3 CERRADO (3/3) | OBJ-1 distribución MCP ✅ · OBJ-2 fontanería ✅ (GSC→suggestion) · OBJ-3 narrativa ✅. STATE.json → stage 1, ciclo 4. Regla operativa nueva persistida: agentes solo <10min, builds inline, smoke prod en cada gate, deploy manual.",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C3-OBJ-3",
+      "text": "C3-OBJ-3 | gate:CLOSED→MERGED+DEPLOYED | /failures (8 post-mortems) + HUMAN-BLOCKED strip genérico (E2E verifica que NO filtra stripe/resend/supabase/npm/key) + waitlist→buildlog; 41/41 E2E, tsc/lint clean, prod 200 verificado. smoke.yml excluido de git (PAT sin scope) — en .git/info/exclude hasta el refresh. | CICLO 3: OBJ-1 ✅ OBJ-2 ✅(GSC pendiente de resultado CDP) OBJ-3 ✅",
+      "failed": false,
+      "closed": true
+    },
     {
       "date": "2026-06-12",
       "type": "C3-OBJ-2",
@@ -209,6 +300,27 @@
     }
   ],
   "commits": [
+    {
+      "hash": "2d3500e",
+      "time": "18:42",
+      "msg": "feat(conversion): compare CTAs → live demo board + AI-agent call telemetry",
+      "add": 13,
+      "del": 2
+    },
+    {
+      "hash": "38ddb15",
+      "time": "18:38",
+      "msg": "fix(geo): sitemap/robots/llms/layout served the dead actions.xyz domain — centralize base URL",
+      "add": 31,
+      "del": 18
+    },
+    {
+      "hash": "e73d8ad",
+      "time": "17:13",
+      "msg": "feat(narrative): /failures post-mortems + human-blocked strip + buildlog-value waitlist",
+      "add": 226,
+      "del": 11
+    },
     {
       "hash": "55c3f93",
       "time": "17:00",

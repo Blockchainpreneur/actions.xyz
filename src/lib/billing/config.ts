@@ -98,7 +98,7 @@ export const PLANS: PlanDisplay[] = [
     recommended: true,
     features: [
       'Everything in Starter',
-      'Auto-join meeting bot',
+      'Optional auto-join bot (recording is botless by default)',
       'Google Calendar sync',
       'End-of-meeting AI synthesis + dedup',
       'Priority support',

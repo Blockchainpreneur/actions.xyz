@@ -91,6 +91,8 @@ export function SiteFooter({ variant = 'full' }: { variant?: 'full' | 'app' }) {
             <Link href="/pricing" style={linkStyle}>Pricing</Link>
             <Link href="/buildlog" style={linkStyle}>Build log</Link>
             <Link href="/failures" style={linkStyle}>Failure log</Link>
+            <Link href="/privacy" style={linkStyle}>Privacy</Link>
+            <Link href="/terms" style={linkStyle}>Terms</Link>
             <Link href="/auth/signin" style={linkStyle}>Start free</Link>
           </div>
         </div>
