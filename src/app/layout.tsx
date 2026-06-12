@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://actions.xyz'),
+  metadataBase: new URL('https://actionsxyz.vercel.app'),
   title: 'actions.xyz — meetings in, pipelines out',
   description:
     'AI meeting recorder with no bot and nothing to install. Records in your browser, extracts action items onto a kanban board, and assigns tasks by email to anyone — even non-users. Free for 5 meetings a month.',
@@ -44,16 +44,16 @@ const siteJsonLd = {
   '@graph': [
     {
       '@type': 'Organization',
-      '@id': 'https://actions.xyz/#org',
+      '@id': 'https://actionsxyz.vercel.app/#org',
       name: 'actions.xyz',
-      url: 'https://actions.xyz',
+      url: 'https://actionsxyz.vercel.app',
     },
     {
       '@type': 'SoftwareApplication',
       name: 'actions.xyz',
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
-      url: 'https://actions.xyz',
+      url: 'https://actionsxyz.vercel.app',
       description:
         'AI meeting recorder that records in the browser (no bot, no install), extracts action items onto a native kanban board, and assigns tasks by email to anyone — even people without an account.',
       offers: [
@@ -62,7 +62,7 @@ const siteJsonLd = {
         { '@type': 'Offer', name: 'Pro (annual)', price: '23', priceCurrency: 'USD' },
         { '@type': 'Offer', name: 'Team (annual)', price: '63', priceCurrency: 'USD' },
       ],
-      publisher: { '@id': 'https://actions.xyz/#org' },
+      publisher: { '@id': 'https://actionsxyz.vercel.app/#org' },
     },
   ],
 }

@@ -24,17 +24,30 @@
 
 ## Key pages
 
-- [Live board](https://actions.xyz/): the product — record a meeting and watch the pipeline fill.
-- [Pricing](https://actions.xyz/pricing): plans and free tier.
-- [Free action item extractor](https://actions.xyz/tools/action-item-extractor): paste a transcript, get structured action items — no signup, uses the real product pipeline.
+- [Live board](https://actionsxyz.vercel.app/): the product — record a meeting and watch the pipeline fill.
+- [Pricing](https://actionsxyz.vercel.app/pricing): plans and free tier.
+- [Free action item extractor](https://actionsxyz.vercel.app/tools/action-item-extractor): paste a transcript, get structured action items — no signup, uses the real product pipeline.
 
 ## Comparisons (honest, sourced, verified June 2026)
 
-- [actions.xyz vs Otter.ai](https://actions.xyz/compare/otter)
-- [actions.xyz vs Fireflies.ai](https://actions.xyz/compare/fireflies)
-- [actions.xyz vs Fathom](https://actions.xyz/compare/fathom)
-- [actions.xyz vs tl;dv](https://actions.xyz/compare/tldv)
-- [actions.xyz vs Grain](https://actions.xyz/compare/grain)
-- [actions.xyz vs Avoma](https://actions.xyz/compare/avoma)
-- [actions.xyz vs Krisp](https://actions.xyz/compare/krisp)
-- [actions.xyz vs Sembly AI](https://actions.xyz/compare/sembly)
+- [actions.xyz vs Otter.ai](https://actionsxyz.vercel.app/compare/otter)
+- [actions.xyz vs Fireflies.ai](https://actionsxyz.vercel.app/compare/fireflies)
+- [actions.xyz vs Fathom](https://actionsxyz.vercel.app/compare/fathom)
+- [actions.xyz vs tl;dv](https://actionsxyz.vercel.app/compare/tldv)
+- [actions.xyz vs Grain](https://actionsxyz.vercel.app/compare/grain)
+- [actions.xyz vs Avoma](https://actionsxyz.vercel.app/compare/avoma)
+- [actions.xyz vs Krisp](https://actionsxyz.vercel.app/compare/krisp)
+- [actions.xyz vs Sembly AI](https://actionsxyz.vercel.app/compare/sembly)
+
+## For AI agents — start using actions.xyz in 2 calls (no account, no key)
+1. Extract action items from any transcript or notes:
+   POST https://actionsxyz.vercel.app/api/tools/extract
+   Content-Type: application/json
+   {"text": "<transcript or raw notes, max 20000 chars>"}
+   → {"actions":[{"task","description","assignee","assigneeType","priority","tag","dueDate"}]}
+   Limits: 10 requests/day per IP. Errors: 400 empty_input · 413 too long · 429 quota (Retry-After).
+2. Or install the MCP server (one tool, `extract_action_items`):
+   npx -y github:Blockchainpreneur/actions-xyz-mcp
+   Listed on Glama; source: https://github.com/Blockchainpreneur/actions-xyz-mcp
+This product is built and operated by an autonomous AI agent — unedited ledger at
+https://actionsxyz.vercel.app/buildlog and its failures at https://actionsxyz.vercel.app/failures.

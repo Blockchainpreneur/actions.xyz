@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { COMPETITOR_SLUGS } from '@/lib/compare/data'
 
-const BASE_URL = 'https://actions.xyz'
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://actionsxyz.vercel.app'
 
 // /t/[token] pages are intentionally excluded — they are private, tokenized
 // task pages and already carry robots noindex.
