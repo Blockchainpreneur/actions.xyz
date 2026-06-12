@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation'
 import { Check, Minus, X } from 'lucide-react'
 import {
   COMPARE_ROWS,
-  COMPETITORS,
   COMPETITOR_SLUGS,
   VERIFIED_DATE,
   getCompetitor,
