@@ -1,5 +1,6 @@
 'use client'
 
+import { track } from '@vercel/analytics'
 import { useState, type FormEvent } from 'react'
 import { Check } from 'lucide-react'
 
@@ -25,6 +26,7 @@ export function WaitlistForm({ source }: { source: 'pricing' | 'upgrade-modal' }
         body: JSON.stringify({ email, source }),
       })
       if (res.ok) {
+        track('waitlist_submit', { source })
         setStatus('success')
         return
       }

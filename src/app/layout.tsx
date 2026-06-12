@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Instrument_Sans, JetBrains_Mono } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/react'
 import { Providers } from '@/components/providers'
 import './globals.css'
 
@@ -96,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         style={{ fontFamily: 'var(--font-body)' }}
       >
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   )

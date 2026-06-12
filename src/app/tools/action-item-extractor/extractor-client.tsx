@@ -1,5 +1,6 @@
 'use client'
 
+import { track } from '@vercel/analytics'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Check, Copy, Link2, Sparkles, Zap } from 'lucide-react'
@@ -99,6 +100,7 @@ export function ExtractorClient() {
   // the whole result, lz-string-compressed; rebuild the done view on mount.
   useEffect(() => {
     const parsed = parseSharedResult(window.location.hash)
+    if (parsed) track('share_view')
     if (!parsed) return
     // URL-fragment rehydration is browser-only data that can only be read
     // after mount; the single intentional re-render is the documented
@@ -128,6 +130,7 @@ export function ExtractorClient() {
       window.history.replaceState(null, '', window.location.pathname + window.location.search)
     }
     try {
+      track('extract_run')
       const res = await fetch('/api/tools/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
