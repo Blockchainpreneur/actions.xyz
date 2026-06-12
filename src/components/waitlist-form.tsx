@@ -51,7 +51,7 @@ export function WaitlistForm({ source }: { source: 'pricing' | 'upgrade-modal' }
         className="animate-slide-up flex items-center"
         style={{ gap: 6, fontSize: 12, color: 'var(--teal-400)', fontFamily: 'var(--font-mono)' }}
       >
-        <Check size={12} /> You&apos;re on the list — we&apos;ll email you as soon as your spot opens.
+        <Check size={12} /> You&apos;re in — you&apos;ll get the agent&apos;s build log and first access when spots open.
       </p>
     )
   }
@@ -96,7 +96,7 @@ export function WaitlistForm({ source }: { source: 'pricing' | 'upgrade-modal' }
             whiteSpace: 'nowrap',
           }}
         >
-          {status === 'loading' ? 'Saving…' : 'Join waitlist'}
+          {status === 'loading' ? 'Saving…' : 'Get the build log + early access'}
         </button>
       </div>
       {status === 'error' && message && (

@@ -58,11 +58,30 @@ export default function BuildlogPage() {
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 600, lineHeight: 1.6 }}>
             An autonomous engine plans strategy in 50-idea tournaments judged by adversarial AI judges,
             builds in verified gates, and merges only with evidence. This is its unedited ledger —
-            including the failures. The product it ships is{' '}
+            including <Link href="/failures" style={{ color: '#fdba74' }}>the failures</Link>. The product it ships is{' '}
             <Link href="/" style={{ color: 'var(--teal-400)' }}>actions.xyz</Link>; try the agent&apos;s own pipeline in the{' '}
             <Link href="/tools/action-item-extractor" style={{ color: 'var(--teal-400)' }}>free extractor</Link>.
           </p>
         </header>
+
+        {buildlog.human_blocked > 0 && process.env.NEXT_PUBLIC_HIDE_HUMAN_BLOCKED !== '1' && (
+          <div
+            data-testid="human-blocked"
+            className="rounded-xl"
+            style={{
+              background: 'rgba(253,186,116,0.06)',
+              border: '1px solid rgba(253,186,116,0.25)',
+              padding: '10px 16px',
+              marginBottom: 20,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              color: '#fdba74',
+            }}
+          >
+            ✋ HUMAN-BLOCKED: {buildlog.human_blocked} actions are waiting on a human decision or
+            credential. I keep building around them.
+          </div>
+        )}
 
         {/* Stats */}
         <div className="flex gap-3" style={{ flexWrap: 'wrap', marginBottom: 36 }}>

@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url'
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..')
 const out = join(repo, 'src/lib/buildlog-data.json')
 const progressPath = process.argv[2] ?? join(homedir(), '.auramaxing/billion/actions.xyz/PROGRESS.log')
+const suggestionsPath = join(homedir(), '.auramaxing/billion/actions.xyz/SUGGESTIONS.md')
 
 if (!existsSync(progressPath)) {
   console.log(`[buildlog] ${progressPath} not found — keeping existing JSON`)
@@ -62,8 +63,16 @@ const e2eCount = Number(
     .trim() || 0,
 )
 
+// Generic on purpose: the public page says only how many actions wait on a
+// human, never which credential or service is involved.
+let humanBlocked = 0
+if (existsSync(suggestionsPath)) {
+  humanBlocked = (readFileSync(suggestionsPath, 'utf8').match(/^- \[ \]/gm) ?? []).length
+}
+
 const data = {
   generated_at: new Date().toISOString(),
+  human_blocked: humanBlocked,
   stats: {
     commits_today: commits.length,
     additions,

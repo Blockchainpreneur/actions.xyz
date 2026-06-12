@@ -381,3 +381,19 @@ test.describe('Buildlog', () => {
     expect(body).toContain('<item>')
   })
 })
+
+test.describe('Failures + human-blocked', () => {
+  test('failure log renders post-mortems', async ({ page }) => {
+    await page.goto('/failures')
+    await expect(page.getByRole('heading', { name: /every time I broke/i })).toBeVisible()
+    expect(await page.getByTestId('failures-list').locator('li').count()).toBeGreaterThanOrEqual(3)
+  })
+
+  test('buildlog shows generic human-blocked strip without leaking specifics', async ({ page }) => {
+    await page.goto('/buildlog')
+    const strip = page.getByTestId('human-blocked')
+    await expect(strip).toBeVisible()
+    const text = await strip.innerText()
+    expect(text).not.toMatch(/stripe|resend|supabase|npm|key/i)
+  })
+})
