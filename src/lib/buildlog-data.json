@@ -1,0 +1,261 @@
+{
+  "generated_at": "2026-06-12T21:01:16.767Z",
+  "stats": {
+    "commits_today": 18,
+    "additions": 6724,
+    "deletions": 155,
+    "e2e_tests": 102,
+    "cycles": 2,
+    "gates_closed": 10,
+    "stalls": 6
+  },
+  "entries": [
+    {
+      "date": "2026-06-12",
+      "type": "C2-OBJ-1",
+      "text": "C2-OBJ-1 | gate:CLOSED→MERGED COMPLETO | 1b inline: 36/37 E2E + flake re-corrido 1/1 (1.1s) = efectivo 37/37; tsc/lint/build verdes; commit 2625533 merged FF + pushed. C2-OBJ-1 entero en producción.",
+      "failed": false,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C2-OBJ-1B",
+      "text": "C2-OBJ-1b | INLINE build (retry 3/3 tras 3er stall) | hallazgo clave: kanban YA es localStorage-first — alcance real era pequeño: claves compartidas en utils, fallback local del /dashboard con nota LOCAL DATA, scaffolding muerto borrado, 5 E2E nuevos (kanban DB-down ×3 + dashboard fallback). tsc+lint(33==baseline) verdes; build+E2E corriendo en background (basvnmqy2).",
+      "failed": true,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C2-OBJ-2B",
+      "text": "C2-OBJ-2b | gate:CLOSED | launch kit 6 archivos verificados en disco, hechos auditados contra git log --numstat (6573+/151-/15 commits, 232 E2E); pre-vuelo bloqueante anotado: /buildlog no existe aún (C2-OBJ-2a) + SWAP-URL. Falta de C2-OBJ-2: buildlog en repo + GSC.",
+      "failed": false,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "LOOP-TICK",
+      "text": "LOOP-TICK | 1b en curso (transcript activo 13:29); lanzado en paralelo el redactor del launch-kit (a567f9b5, C2-OBJ-2b, no toca el repo). Sin respuestas del usuario.",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C2-OBJ-1A",
+      "text": "C2-OBJ-1a | gate:CLOSED→MERGED | sub-builder OK sin stall (split strategy validada): permalinks lz-string + waitlist DB-free; 33/33 E2E, tsc/lint/build verdes (verificado tsc por el padre); merge FF + push.",
+      "failed": true,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C2-OBJ-1",
+      "text": "C2-OBJ-1 | retry 2/3 | segundo stall (a98f905c, 123 bytes, watchdog 600s); diagnóstico: puertos de test limpios, :3000/:3100 long-lived intocables, swap estructural. HEAL: split en sub-builders — 1a permalinks+waitlist lanzado (aa5d5cbb); 1b local-mode kanban pendiente; si 1a estanca → INLINE.",
+      "failed": true,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "LOOP-TICK",
+      "text": "LOOP-TICK | builder retry a98f905c en curso; sin respuestas del usuario; cron sano. Cedo.",
+      "failed": true,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "C2-OBJ-1",
+      "text": "C2-OBJ-1 | retry 1/3 | builder previo acf59fa4 STALLED (watchdog 600s, sin estado dejado — repo limpio verificado); causa probable: swap 8.4/9.2GB. Relanzado como a98f905c con spec idéntica + lecturas targeted. Self-heal: si falla 2/3, partir el objetivo en 3 sub-builders secuenciales.",
+      "failed": true,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "CYCLE2-L0",
+      "text": "CYCLE2-L0 | gate:CLOSED | 50 ideas (agentes a17b8c26/a06efc6d/a867e54f) → torneo CFO/growth/riesgo (a8cbda31/a8e21031/ae6ae6cc) → top-3: C2-OBJ-1 DB-independencia (28/30 unánime), C2-OBJ-2 buildlog+launch-kit+GSC, C2-OBJ-3 MCP server. ROJOS a SUGGESTIONS (HN click, cobro real, Gmail). GROQ_API_KEY confirmada en Vercel + prod Ready (evidencia vercel env ls). Builder C2-OBJ-1 lanzado (billion/local-mode).",
+      "failed": false,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "OBJ-3",
+      "text": "OBJ-3 | gate:CLOSED→MERGED | verificado (4 commits, tsc clean, compare/[slug]+tool+llms.txt+sitemap presentes); builder: 90/90 E2E, build verde, lint==baseline; merge FF 14bd82f..baeb58c + push. | CICLO 1 CERRADO (3/3) → re-corriendo motor 50→3 para ciclo 2",
+      "failed": false,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "LOOP-TICK",
+      "text": "LOOP-TICK | wakeup 04:44 redundante (su tarea ya ejecutada: OBJ-2 merged 14bd82f, OBJ-3 lanzado); builder OBJ-3 sigue activo; usuario sin responder suggestions. Cedo.",
+      "failed": false,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "LOOP-TICK",
+      "text": "LOOP-TICK | nada accionable: builder OBJ-3 (billion/pseo, agente a5f4422791e8e78bd) sigue corriendo; sin respuesta del usuario a suggestions (Supabase/Stripe/Resend); cron 3a9f4f10 sano (no cerca de expirar). Cedo hasta notificación o próximo tick.",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "OBJ-2",
+      "text": "OBJ-2 | gate:CLOSED→MERGED | verificado por el padre (6 commits reales, tsc re-corrido clean, /t/[token] + 2 migraciones presentes); builder: 65/65 E2E, build verde, lint==baseline; merge FF + push a main. Pendiente activación real (no gate): RESEND_API_KEY + CRON_SECRET en Vercel (suggestions). | evidencia: diff 19 files +2023",
+      "failed": false,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "LOOP",
+      "text": "LOOP | perpetuo-definitivo armado | 3 capas: (1) cron in-session 3a9f4f10 hourly :23 con self-re-arm anti-expiración, (2) sticky billion-mode.json del router (rolling 24h), (3) estado persistente STATE/GOALS/PROGRESS = resume-first en cualquier sesión. Vivo ahora: builder OBJ-2 (email-loop) + wakeup 04:44.",
+      "failed": false,
+      "closed": false
+    },
+    {
+      "date": "2026-06-12",
+      "type": "OBJ-1",
+      "text": "OBJ-1 | gate:PARTIAL→MERGED | builder verificado por el padre (git log 5 commits, tsc clean re-corrido, archivos confirmados); 44/44 E2E del builder; mergeado FF a main 6ee4674 + pushed. PENDIENTE para gate 100%: Stripe keys (humano) + Supabase restore (humano: límite 2 proyectos free — suggestion crítica). Billing fail-open: producto no empeora. | evidencia: merge stat 16 files +1428",
+      "failed": false,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "NOTE",
+      "text": "OBJ-3-research | gate:CLOSED | 8/8 competidores verificados → research/competitors.md; insight: no-bot ya no es moat (6/8 botless), combo defendible = botless+zero-install+kanban+email-a-no-usuarios (0/8); GOALS.md corregido. Evidencia: agente ac58de676, 6 tool uses, fuentes en el doc.",
+      "failed": true,
+      "closed": true
+    },
+    {
+      "date": "2026-06-12",
+      "type": "CYCLE1-L0",
+      "text": "CYCLE1-L0 | gate:CLOSED | 50 ideas (3 agentes paralelos) → torneo 3 jueces adversariales (CFO/competidor/cliente) → top-3: OBJ-1 monetización, OBJ-2 email-anzuelo, OBJ-3 pSEO. Evidencia: transcripts agentes a2be0319/aef52ae0/a3d0823c + jueces a54681d1/aab6550d/a01f2dbea.",
+      "failed": false,
+      "closed": true
+    }
+  ],
+  "commits": [
+    {
+      "hash": "2625533",
+      "time": "15:43",
+      "msg": "feat(local-mode): dashboard local fallback when the DB is down + DB-down kanban E2E",
+      "add": 151,
+      "del": 4
+    },
+    {
+      "hash": "32edc50",
+      "time": "13:27",
+      "msg": "feat(waitlist): DB-free email capture endpoint + signup-down fallback UI",
+      "add": 415,
+      "del": 0
+    },
+    {
+      "hash": "301da05",
+      "time": "13:23",
+      "msg": "feat(extractor): DB-free shareable permalinks via lz-string URL fragment",
+      "add": 262,
+      "del": 2
+    },
+    {
+      "hash": "baeb58c",
+      "time": "04:49",
+      "msg": "test(pseo): E2E + unit gate for the pSEO surface",
+      "add": 362,
+      "del": 1
+    },
+    {
+      "hash": "acd734c",
+      "time": "04:45",
+      "msg": "feat(geo): llms.txt + sitemap + robots + site JSON-LD + landing footer links",
+      "add": 138,
+      "del": 2
+    },
+    {
+      "hash": "411a86f",
+      "time": "04:43",
+      "msg": "feat(tools): free action-item extractor — live demo of the product pipeline",
+      "add": 701,
+      "del": 83
+    },
+    {
+      "hash": "c210144",
+      "time": "04:40",
+      "msg": "feat(pseo): /compare/[slug] — 8 static vs-pages from one data-driven template",
+      "add": 1244,
+      "del": 0
+    },
+    {
+      "hash": "14bd82f",
+      "time": "04:29",
+      "msg": "test(email-loop): E2E — token units, email HTML/ICS, /t page via interception, degradation",
+      "add": 265,
+      "del": 0
+    },
+    {
+      "hash": "5cfadb6",
+      "time": "04:29",
+      "msg": "feat(digest): weekly open-tasks digest cron (Mondays 9:00 UTC)",
+      "add": 121,
+      "del": 0
+    },
+    {
+      "hash": "2ad6097",
+      "time": "04:29",
+      "msg": "feat(growth): signup attribution — ?ref/UTM captured at sign-in, persisted fail-open",
+      "add": 55,
+      "del": 1
+    },
+    {
+      "hash": "c946333",
+      "time": "04:29",
+      "msg": "feat(email): redesigned assignment email — injectable sender, dark-safe HTML, .ics, viral footer",
+      "add": 341,
+      "del": 60
+    },
+    {
+      "hash": "ef5b9b0",
+      "time": "04:28",
+      "msg": "feat(email-loop): public no-login task page /t/[token] + token APIs",
+      "add": 984,
+      "del": 0
+    },
+    {
+      "hash": "c8f301c",
+      "time": "04:28",
+      "msg": "feat(email-loop): signed task tokens, ICS generation, events tracking + migration",
+      "add": 257,
+      "del": 0
+    },
+    {
+      "hash": "6ee4674",
+      "time": "04:10",
+      "msg": "test(billing): E2E for pricing, freemium modal, 503 contract + signed webhook units",
+      "add": 344,
+      "del": 1
+    },
+    {
+      "hash": "13bf97e",
+      "time": "04:10",
+      "msg": "feat(billing): freemium meeting limit — server 402 gate + upgrade modal",
+      "add": 151,
+      "del": 1
+    },
+    {
+      "hash": "5346bd7",
+      "time": "04:09",
+      "msg": "feat(pricing): /pricing page with annual-default toggle and 3 anchored tiers",
+      "add": 349,
+      "del": 0
+    },
+    {
+      "hash": "7624d06",
+      "time": "04:09",
+      "msg": "feat(billing): checkout, webhook, and portal API routes",
+      "add": 166,
+      "del": 0
+    },
+    {
+      "hash": "a4ed408",
+      "time": "04:09",
+      "msg": "feat(billing): plans config, Stripe client, webhook handler + subscriptions migration",
+      "add": 418,
+      "del": 0
+    }
+  ]
+}

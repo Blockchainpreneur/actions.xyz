@@ -359,3 +359,25 @@ test.describe('GEO surface', () => {
     expect(types).toContain('SoftwareApplication')
   })
 })
+
+// ─────────────────────────────────────────────────────────
+// BUILDLOG — the autonomous-agent ledger page
+// ─────────────────────────────────────────────────────────
+test.describe('Buildlog', () => {
+  test('renders timeline with entries, stats and honest failures', async ({ page }) => {
+    await page.goto('/buildlog')
+    await expect(page.getByRole('heading', { name: /built and operated by an AI agent/i })).toBeVisible()
+    const items = page.getByTestId('buildlog-timeline').locator('li')
+    expect(await items.count()).toBeGreaterThanOrEqual(5)
+    await expect(page.getByText('Failures & retries')).toBeVisible()
+  })
+
+  test('feed.xml responds with valid RSS', async ({ request }) => {
+    const res = await request.get('/buildlog/feed.xml')
+    expect(res.status()).toBe(200)
+    expect(res.headers()['content-type']).toContain('rss+xml')
+    const body = await res.text()
+    expect(body).toContain('<rss version="2.0">')
+    expect(body).toContain('<item>')
+  })
+})

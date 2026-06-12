@@ -89,6 +89,7 @@ export function SiteFooter({ variant = 'full' }: { variant?: 'full' | 'app' }) {
           <div className="flex flex-col">
             <Link href="/" style={linkStyle}>Live board</Link>
             <Link href="/pricing" style={linkStyle}>Pricing</Link>
+            <Link href="/buildlog" style={linkStyle}>Build log</Link>
             <Link href="/auth/signin" style={linkStyle}>Start free</Link>
           </div>
         </div>
