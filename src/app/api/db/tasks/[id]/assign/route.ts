@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { getSupabase, getOrCreateUser } from '@/lib/supabase'
 import { sendTaskAssignmentEmail, isValidEmail } from '@/lib/email'
+import { signTaskToken } from '@/lib/task-token'
+import { trackEvent } from '@/lib/events'
 
 const MAX_ASSIGNEES_PER_REQUEST = 20
 
@@ -72,21 +74,46 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         continue
       }
 
+      // Signed token for the public task page (/t/[token]) — the email's CTA.
+      // Stateless HMAC, so it works even if persistence below fails.
+      const token = signTaskToken({ taskId, email })
+
       // Send notification email (best-effort)
       try {
-        await sendTaskAssignmentEmail({
+        const sent = await sendTaskAssignmentEmail({
           to: email,
           assignerName: assigner.name || assigner.email,
           taskText: task.text,
           taskDescription: task.description || '',
           meetingName: task.sessions?.name || 'a meeting',
+          token,
+          dueDate: task.due_date || null,
         })
+
+        if (sent.ok) {
+          await trackEvent('assigned_email_sent', {
+            email,
+            taskId,
+            token: token ?? undefined,
+            metadata: { via: 'assign' },
+          })
+        }
 
         await supabase
           .from('task_assignees')
           .update({ notified_at: new Date().toISOString() })
           .eq('task_id', taskId)
           .eq('user_id', user.id)
+
+        // Separate best-effort write: the access_token column only exists
+        // once the email_loop migration is applied — must not break notified_at
+        if (token) {
+          await supabase
+            .from('task_assignees')
+            .update({ access_token: token })
+            .eq('task_id', taskId)
+            .eq('user_id', user.id)
+        }
 
         await supabase
           .from('email_invites')
