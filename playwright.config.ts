@@ -6,7 +6,7 @@ export default defineConfig({
   retries: 0,
   timeout: 15000,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.PW_BASE_URL ?? 'http://localhost:3000',
     actionTimeout: 5000,
   },
   projects: [
