@@ -33,6 +33,11 @@ export function nameToInitial(name: string): string {
   return name.trim().charAt(0).toUpperCase()
 }
 
+// Shared localStorage keys — the kanban (use-actions) writes them, the
+// dashboard reads them as its no-DB fallback.
+export const SESSION_STORAGE_KEY = 'current-session'
+export const HISTORY_STORAGE_KEY = 'sessions-history'
+
 export function persistSession(key: string, data: unknown): void {
   try {
     localStorage.setItem(`actions:${key}`, JSON.stringify(data))

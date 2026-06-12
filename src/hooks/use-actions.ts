@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { generateId, buildDemoSession, loadSession, persistSession, getParticipantColor, nameToInitial } from '@/lib/utils'
+import { generateId, buildDemoSession, loadSession, persistSession, getParticipantColor, nameToInitial, SESSION_STORAGE_KEY, HISTORY_STORAGE_KEY } from '@/lib/utils'
 import {
   type ActionItem,
   type ActionStatus,
@@ -12,8 +12,8 @@ import {
   PARTICIPANT_COLORS,
 } from '@/lib/types'
 
-const SESSION_KEY = 'current-session'
-const HISTORY_KEY = 'sessions-history'
+const SESSION_KEY = SESSION_STORAGE_KEY
+const HISTORY_KEY = HISTORY_STORAGE_KEY
 const MAX_HISTORY = 20
 
 export function useActions() {

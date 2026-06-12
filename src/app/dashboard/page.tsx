@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'motion/react'
+import { loadSession, HISTORY_STORAGE_KEY, SESSION_STORAGE_KEY } from '@/lib/utils'
+import type { ActionItem, Session as LocalSession } from '@/lib/types'
 
 interface Task {
   id: string
@@ -258,11 +260,41 @@ const PRIORITY_COLOR: Record<string, string> = {
   low: 'var(--text-muted)',
 }
 
+// The cloud DB can be unreachable (paused project, network) — the kanban is
+// localStorage-first, so the dashboard falls back to the same local data
+// rather than rendering an empty shell.
+function loadLocalTasks(): Task[] {
+  const current = loadSession<LocalSession>(SESSION_STORAGE_KEY)
+  const history = loadSession<LocalSession[]>(HISTORY_STORAGE_KEY) ?? []
+  const sessions = [current, ...history].filter((s): s is LocalSession => Boolean(s))
+  const seen = new Set<string>()
+  const tasks: Task[] = []
+  for (const s of sessions) {
+    for (const a of s.actions as ActionItem[]) {
+      if (seen.has(a.id)) continue
+      seen.add(a.id)
+      tasks.push({
+        id: a.id,
+        text: a.text,
+        description: a.description,
+        status: a.status,
+        assignee_name: a.assigneeName,
+        priority: a.priority,
+        tag: a.tag,
+        created_at: new Date(a.createdAt).toISOString(),
+        session_id: s.id,
+      })
+    }
+  }
+  return tasks
+}
+
 // ── Dashboard ──────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
+  const [localOnly, setLocalOnly] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -280,8 +312,14 @@ export default function Dashboard() {
         if (res.ok) {
           const data = await res.json()
           setTasks(data.tasks ?? [])
+        } else {
+          setTasks(loadLocalTasks())
+          setLocalOnly(true)
         }
-      } catch { /* silent */ }
+      } catch {
+        setTasks(loadLocalTasks())
+        setLocalOnly(true)
+      }
       setLoading(false)
     }
 
@@ -367,6 +405,23 @@ export default function Dashboard() {
           </a>
         </div>
       </nav>
+
+      {localOnly && (
+        <div
+          data-testid="local-data-note"
+          className="px-4 py-1.5 text-center"
+          style={{
+            fontSize: 10,
+            fontFamily: 'var(--font-mono)',
+            letterSpacing: '0.05em',
+            color: 'var(--text-muted)',
+            borderBottom: '1px solid var(--border-subtle)',
+            background: 'var(--surface-1)',
+          }}
+        >
+          LOCAL DATA — cloud sync unavailable, showing this browser&apos;s boards
+        </div>
+      )}
 
       {/* Page content */}
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 20px 64px' }}>

@@ -208,3 +208,90 @@ test.describe('Waitlist UI fallback', () => {
     await expect(modal.getByTestId('waitlist-success')).toBeVisible()
   })
 })
+
+// ─────────────────────────────────────────────────────────
+// 4. KANBAN WITH THE DB DOWN — the app is localStorage-first;
+//    every /api/db/* call failing must not break the board.
+// ─────────────────────────────────────────────────────────
+test.describe('Kanban local mode (DB down)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/db/**', route =>
+      route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'db unavailable' }) }))
+  })
+
+  test('demo board loads and cards move with every /api/db/* failing', async ({ page }) => {
+    await page.goto('/')
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+    // Demo session renders despite DB being down
+    await expect(page.getByRole('button', { name: 'Q2 Planning' })).toBeVisible()
+    // Move a card via the move button — pure local state + localStorage
+    const card = page.locator('text=Finalize onboarding flow mockups').first()
+    await expect(card).toBeVisible()
+    await card.locator('..').hover()
+    await page.getByTitle('Move to In Deadline').first().click()
+    await page.waitForTimeout(300)
+    await expect(card).toBeVisible()
+  })
+
+  test('New session works when the usage-ledger POST returns 503', async ({ page }) => {
+    await page.goto('/')
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+    await expect(page.getByRole('button', { name: 'Q2 Planning' })).toBeVisible()
+    await page.getByRole('button', { name: /^new$/i }).first().click()
+    // 503 (not 402) falls through to local creation — a fresh board appears
+    await expect(page.getByRole('button', { name: 'New Meeting' })).toBeVisible()
+  })
+
+  test('board state persists across reload with the DB down', async ({ page }) => {
+    await page.goto('/')
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
+    await page.waitForLoadState('networkidle')
+    await expect(page.getByRole('button', { name: 'Q2 Planning' })).toBeVisible()
+    const cards = page.locator('[class*="rounded-lg"][class*="cursor-pointer"]')
+    const before = await cards.count()
+    expect(before).toBeGreaterThan(0)
+    await page.reload()
+    await expect(page.getByRole('button', { name: 'Q2 Planning' })).toBeVisible()
+    expect(await cards.count()).toBe(before)
+  })
+})
+
+// ─────────────────────────────────────────────────────────
+// 5. DASHBOARD LOCAL FALLBACK — when /api/db/tasks fails, the
+//    dashboard shows this browser's boards instead of an empty shell.
+// ─────────────────────────────────────────────────────────
+test.describe('Dashboard local fallback (DB down)', () => {
+  test('shows LOCAL DATA note and tasks from localStorage', async ({ page }) => {
+    // Fake an authenticated NextAuth session (client reads /api/auth/session)
+    await page.route('**/api/auth/session', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ user: { name: 'Test User', email: 'test@example.com' }, expires: '2099-01-01T00:00:00.000Z' }),
+      }))
+    await page.route('**/api/db/**', route => route.fulfill({ status: 503, body: '{}' }))
+    // Seed the kanban's localStorage shape before the app boots
+    await page.addInitScript(() => {
+      const session = {
+        id: 'local-1',
+        name: 'Seeded Meeting',
+        startedAt: Date.now(),
+        participants: [],
+        transcript: [],
+        keyPoints: [],
+        actions: [
+          { id: 'a1', text: 'Seeded local task', status: 'actions', assigneeType: 'human', assigneeName: 'Alex', priority: 'high', createdAt: Date.now() },
+        ],
+      }
+      localStorage.setItem('actions:current-session', JSON.stringify(session))
+    })
+    await page.goto('/dashboard')
+    await expect(page.getByTestId('local-data-note')).toBeVisible()
+    await expect(page.getByText('Seeded local task')).toBeVisible()
+  })
+})
