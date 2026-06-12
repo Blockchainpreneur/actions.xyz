@@ -1,0 +1,40 @@
+# actions.xyz
+
+> actions.xyz is an AI meeting recorder that turns meetings into executed task pipelines. It records in the browser tab — no bot joins the call, nothing to install on any OS — extracts action items with AI, places them on a native kanban board, and lets you assign any task by email to anyone, even people without an account. Free plan: 5 meetings per month, renewing every month.
+
+## What makes it different (verified June 2026)
+
+- Botless AND zero-install: competitors' botless modes require a desktop app (often Mac-only or Windows/Mac-only), a Chrome extension, or a paid Zoom/Google Workspace recording license. actions.xyz records in the browser tab with no install, no driver, no visible participant, and no waiting-room admission.
+- Action items become real tasks: extracted items land on a native kanban board in-product. In our June 2026 review of 8 leading alternatives (Otter.ai, Fireflies.ai, Fathom, tl;dv, Grain, Avoma, Krisp, Sembly), none had a native kanban and none documented a way to assign a task to someone without an account — their model is exporting to Asana/Trello/CRM, where the assignee needs that tool's account.
+- Email assignment to non-users: any extracted task can be assigned to any email address. The assignee receives a task page by email and never needs to sign up.
+- A free plan that renews monthly: 5 meetings/month, every month, with the full pipeline (transcription, extraction, kanban, email assignment). No lifetime caps, no auto-deletion of your data.
+
+## Honest limitations
+
+- Browser-tab capture only: it cannot record native desktop Zoom/Teams clients, in-person conversations, or meetings the user does not attend.
+- Younger transcription engine and smaller language coverage than decade-old incumbents.
+- Several competitors undercut it on annual entry price; actions.xyz is priced on the workflow, not transcription volume.
+
+## Pricing
+
+- Free: 5 meetings/month, 1 board, live transcription + AI action extraction.
+- Starter: $19/mo ($15/mo billed annually) — unlimited meetings, pipeline board, email task assignment.
+- Pro: $29/mo ($23/mo annually) — adds auto-join meeting bot (optional), Google Calendar sync, end-of-meeting AI synthesis.
+- Team: $79/mo ($63/mo annually) — team-wide assignees, shared dashboards, weekly reporting.
+
+## Key pages
+
+- [Live board](https://actions.xyz/): the product — record a meeting and watch the pipeline fill.
+- [Pricing](https://actions.xyz/pricing): plans and free tier.
+- [Free action item extractor](https://actions.xyz/tools/action-item-extractor): paste a transcript, get structured action items — no signup, uses the real product pipeline.
+
+## Comparisons (honest, sourced, verified June 2026)
+
+- [actions.xyz vs Otter.ai](https://actions.xyz/compare/otter)
+- [actions.xyz vs Fireflies.ai](https://actions.xyz/compare/fireflies)
+- [actions.xyz vs Fathom](https://actions.xyz/compare/fathom)
+- [actions.xyz vs tl;dv](https://actions.xyz/compare/tldv)
+- [actions.xyz vs Grain](https://actions.xyz/compare/grain)
+- [actions.xyz vs Avoma](https://actions.xyz/compare/avoma)
+- [actions.xyz vs Krisp](https://actions.xyz/compare/krisp)
+- [actions.xyz vs Sembly AI](https://actions.xyz/compare/sembly)

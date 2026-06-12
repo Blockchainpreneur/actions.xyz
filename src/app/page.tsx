@@ -10,6 +10,7 @@ import { SessionNav } from '@/components/session-nav'
 import { UpgradeModal } from '@/components/upgrade-modal'
 import { TranscriptSidebar } from '@/components/transcript-sidebar'
 import { PipelineBoard } from '@/components/pipeline-board'
+import { SiteFooter } from '@/components/marketing/site-footer'
 import { generateId, getParticipantColor, nameToInitial } from '@/lib/utils'
 import type { ActionItem, Participant } from '@/lib/types'
 
@@ -232,6 +233,8 @@ export default function Home() {
               onAssignEmails={handleAssignEmails}
             />
           </div>
+
+          <SiteFooter variant="app" />
 
           <UpgradeModal
             open={upgradeLimit !== null}
