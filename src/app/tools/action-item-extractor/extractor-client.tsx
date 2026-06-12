@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Check, Copy, Sparkles, Zap } from 'lucide-react'
+import { ArrowRight, Check, Copy, Link2, Sparkles, Zap } from 'lucide-react'
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string'
 import type { ExtractedAction } from '@/lib/extraction'
 
 const MAX_CHARS = 20_000
@@ -19,6 +20,54 @@ const PRIORITY_COLOR: Record<string, string> = {
   high: 'var(--error)',
   med: 'var(--warning)',
   low: 'var(--text-muted)',
+}
+
+const SHARE_HASH_PREFIX = '#r='
+
+interface SharedResult {
+  actions: ExtractedAction[]
+  participants: string[]
+}
+
+/**
+ * Parse a `#r=<lz-string>` URL fragment back into a result. Defensive:
+ * anything malformed (bad compression, bad JSON, wrong shape) → null, and
+ * the page falls back to the normal idle state. Fields are coerced to the
+ * ExtractedAction contract so a tampered link can't inject odd shapes.
+ */
+function parseSharedResult(hash: string): SharedResult | null {
+  if (!hash.startsWith(SHARE_HASH_PREFIX)) return null
+  try {
+    const json = decompressFromEncodedURIComponent(hash.slice(SHARE_HASH_PREFIX.length))
+    if (!json) return null
+    const data = JSON.parse(json) as { actions?: unknown; participants?: unknown }
+    if (!Array.isArray(data.actions) || data.actions.length === 0) return null
+    const actions: ExtractedAction[] = []
+    for (const raw of data.actions.slice(0, 100)) {
+      if (typeof raw !== 'object' || raw === null) return null
+      const a = raw as Record<string, unknown>
+      if (typeof a.task !== 'string' || !a.task.trim()) return null
+      actions.push({
+        task: a.task,
+        description: typeof a.description === 'string' ? a.description : '',
+        assignee: typeof a.assignee === 'string' && a.assignee ? a.assignee : 'Unassigned',
+        assigneeType: a.assigneeType === 'agent' ? 'agent' : 'human',
+        priority: a.priority === 'high' || a.priority === 'low' ? a.priority : 'med',
+        tag: typeof a.tag === 'string' && a.tag ? a.tag : 'general',
+        ...(typeof a.dueDate === 'string' && a.dueDate ? { dueDate: a.dueDate } : {}),
+      })
+    }
+    const participants = Array.isArray(data.participants)
+      ? data.participants.filter((p): p is string => typeof p === 'string').slice(0, 50)
+      : []
+    return { actions, participants }
+  } catch {
+    return null
+  }
+}
+
+function encodeShareFragment(result: SharedResult): string {
+  return SHARE_HASH_PREFIX + compressToEncodedURIComponent(JSON.stringify(result))
 }
 
 function toMarkdown(actions: ExtractedAction[]): string {
@@ -42,6 +91,24 @@ export function ExtractorClient() {
   const [actions, setActions] = useState<ExtractedAction[]>([])
   const [participants, setParticipants] = useState<string[]>([])
   const [copied, setCopied] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
+  // True when the current result was reconstructed from a shared #r= link.
+  const [shared, setShared] = useState(false)
+
+  // Permalink rehydration — client-side only, no DB. A `#r=` fragment carries
+  // the whole result, lz-string-compressed; rebuild the done view on mount.
+  useEffect(() => {
+    const parsed = parseSharedResult(window.location.hash)
+    if (!parsed) return
+    // URL-fragment rehydration is browser-only data that can only be read
+    // after mount; the single intentional re-render is the documented
+    // trade-off (https://react.dev/learn/you-might-not-need-an-effect).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActions(parsed.actions)
+    setParticipants(parsed.participants)
+    setShared(true)
+    setPhase('done')
+  }, [])
 
   const overLimit = text.length > MAX_CHARS
   const charLabel = useMemo(
@@ -54,6 +121,12 @@ export function ExtractorClient() {
     setPhase('loading')
     setError(null)
     setCopied(false)
+    setLinkCopied(false)
+    setShared(false)
+    // A fresh extraction owns the URL again — drop any stale share fragment.
+    if (window.location.hash.startsWith(SHARE_HASH_PREFIX)) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
     try {
       const res = await fetch('/api/tools/extract', {
         method: 'POST',
@@ -85,6 +158,29 @@ export function ExtractorClient() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch { /* clipboard denied — non-fatal */ }
+  }
+
+  async function handleCopyLink() {
+    const fragment = encodeShareFragment({ actions, participants })
+    // Reflect the fragment in the address bar so the visible URL is the
+    // share link too (and so tests/users can copy it from there).
+    window.history.replaceState(null, '', fragment)
+    const url = `${window.location.origin}${window.location.pathname}${window.location.search}${fragment}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch { /* clipboard denied — URL is already in the address bar */ }
+  }
+
+  function handleExtractOwn() {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    setShared(false)
+    setPhase('idle')
+    setActions([])
+    setParticipants([])
+    setText('')
+    setError(null)
   }
 
   return (
@@ -225,6 +321,43 @@ export function ExtractorClient() {
           </div>
         ) : (
           <section data-testid="extractor-results" className="animate-slide-up flex flex-col" style={{ gap: 12 }}>
+            {shared && (
+              <div
+                data-testid="extractor-shared-banner"
+                className="flex flex-col sm:flex-row items-center justify-between"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  background: 'rgba(45,212,191,0.06)',
+                  border: '1px solid var(--border-accent)',
+                  gap: 10,
+                }}
+              >
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>
+                  Shared result — someone sent you this extraction.
+                </span>
+                <button
+                  type="button"
+                  data-testid="extractor-extract-own"
+                  onClick={handleExtractOwn}
+                  className="btn-press flex items-center"
+                  style={{
+                    gap: 6,
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    background: 'var(--teal-500)',
+                    border: '1px solid var(--teal-400)',
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Sparkles size={11} /> Extract your own
+                </button>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row items-center justify-between" style={{ gap: 10 }}>
               <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
                 {actions.length} action item{actions.length === 1 ? '' : 's'}
@@ -234,6 +367,27 @@ export function ExtractorClient() {
                   </span>
                 )}
               </h2>
+              <div className="flex items-center" style={{ gap: 8 }}>
+              <button
+                type="button"
+                data-testid="extractor-share"
+                onClick={handleCopyLink}
+                className="btn-press flex items-center"
+                style={{
+                  gap: 6,
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border-subtle)',
+                  color: linkCopied ? 'var(--teal-400)' : 'var(--text-secondary)',
+                  fontSize: 11,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                {linkCopied ? <Check size={12} /> : <Link2 size={12} />}
+                {linkCopied ? 'Link copied' : 'Copy share link'}
+              </button>
               <button
                 type="button"
                 data-testid="extractor-copy"
@@ -254,6 +408,7 @@ export function ExtractorClient() {
                 {copied ? <Check size={12} /> : <Copy size={12} />}
                 {copied ? 'Copied' : 'Copy as Markdown'}
               </button>
+              </div>
             </div>
 
             {actions.map((a, i) => (
