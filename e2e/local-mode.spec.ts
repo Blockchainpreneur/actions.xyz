@@ -92,3 +92,119 @@ test.describe('Extractor permalinks (no DB)', () => {
     await expect(page.getByTestId('extractor-error')).not.toBeVisible()
   })
 })
+
+// ─────────────────────────────────────────────────────────
+// 2. WAITLIST — DB-FREE EMAIL CAPTURE
+//    Direct API contract against `next start` (no DB, no
+//    BLOB token → entries land in [WAITLIST] logs).
+//    Each test spoofs a unique x-forwarded-for so the
+//    per-IP rate-limit buckets don't bleed across tests
+//    or across reruns against the same server instance.
+// ─────────────────────────────────────────────────────────
+function uniqueIp(label: string): string {
+  return `e2e-${label}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`
+}
+
+test.describe('Waitlist API (no DB)', () => {
+  test('valid email → 200 ok:true', async ({ request }) => {
+    const res = await request.post('/api/waitlist', {
+      headers: { 'x-forwarded-for': uniqueIp('ok') },
+      data: { email: 'founder@example.com', source: 'pricing' },
+    })
+    expect(res.status()).toBe(200)
+    expect(await res.json()).toMatchObject({ ok: true })
+  })
+
+  test('invalid email / bad body → 400', async ({ request }) => {
+    const ip = uniqueIp('bad')
+    for (const data of [{ email: 'not-an-email' }, { email: '' }, {}]) {
+      const res = await request.post('/api/waitlist', { headers: { 'x-forwarded-for': ip }, data })
+      expect(res.status()).toBe(400)
+    }
+    // Non-JSON body
+    const res = await request.post('/api/waitlist', {
+      headers: { 'x-forwarded-for': ip, 'content-type': 'application/json' },
+      data: 'not json',
+    })
+    expect(res.status()).toBe(400)
+  })
+
+  test('rate limit → 429 with Retry-After after the per-IP quota', async ({ request }) => {
+    const ip = uniqueIp('flood')
+    let limited = false
+    for (let i = 0; i < 10; i++) {
+      const res = await request.post('/api/waitlist', {
+        headers: { 'x-forwarded-for': ip },
+        data: { email: `flood${i}@example.com`, source: 'pricing' },
+      })
+      if (res.status() === 429) {
+        limited = true
+        expect(Number(res.headers()['retry-after'])).toBeGreaterThan(0)
+        const body = await res.json()
+        expect(body.code).toBe('rate_limited')
+        break
+      }
+      expect(res.status()).toBe(200)
+    }
+    expect(limited).toBe(true)
+  })
+})
+
+test.describe('Waitlist UI fallback', () => {
+  test('pricing fallback captures email with success state (intercepted)', async ({ page }) => {
+    await page.route('**/api/waitlist', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }),
+    )
+    await page.goto('/pricing')
+    const fallback = page.getByTestId('waitlist-fallback')
+    await expect(fallback).toBeVisible()
+    await fallback.getByTestId('waitlist-email').fill('lead@example.com')
+    await fallback.getByTestId('waitlist-submit').click()
+    await expect(fallback.getByTestId('waitlist-success')).toBeVisible()
+    await expect(fallback.getByTestId('waitlist-form')).not.toBeVisible()
+  })
+
+  test('pricing fallback shows error state on 429 (intercepted)', async ({ page }) => {
+    await page.route('**/api/waitlist', route =>
+      route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Too many signups from this network — try again later.', code: 'rate_limited' }),
+      }),
+    )
+    await page.goto('/pricing')
+    const fallback = page.getByTestId('waitlist-fallback')
+    await fallback.getByTestId('waitlist-email').fill('lead@example.com')
+    await fallback.getByTestId('waitlist-submit').click()
+    await expect(fallback.getByTestId('waitlist-error')).toBeVisible()
+    await expect(fallback.getByTestId('waitlist-error')).toContainText(/too many attempts/i)
+  })
+
+  test('upgrade modal includes the waitlist fallback', async ({ page }) => {
+    // Same 402 simulation as billing.spec.ts to open the modal.
+    await page.goto('/')
+    await page.evaluate(() => localStorage.clear())
+    await page.reload()
+    await page.route('**/api/db/sessions', async route => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({
+          status: 402,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Free plan limit reached', code: 'meeting_limit_reached', used: 5, limit: 5 }),
+        })
+        return
+      }
+      await route.continue()
+    })
+    await page.route('**/api/waitlist', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }),
+    )
+
+    await page.getByTitle('New session').click()
+    const modal = page.getByTestId('upgrade-modal')
+    await expect(modal).toBeVisible()
+    await modal.getByTestId('waitlist-email').fill('blocked-user@example.com')
+    await modal.getByTestId('waitlist-submit').click()
+    await expect(modal.getByTestId('waitlist-success')).toBeVisible()
+  })
+})

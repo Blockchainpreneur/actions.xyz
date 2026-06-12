@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { FREE_MEETING_LIMIT } from '@/lib/billing/config'
+import { WaitlistForm } from '@/components/waitlist-form'
 
 interface UpgradeModalProps {
   open: boolean
@@ -100,6 +101,15 @@ export function UpgradeModal({ open, limit = FREE_MEETING_LIMIT, onClose }: Upgr
           >
             Not now
           </button>
+        </div>
+
+        {/* Fallback when normal signup/checkout is down (database paused):
+            capture the email DB-free so the upgrade intent isn't lost. */}
+        <div className="flex flex-col" style={{ gap: 8, marginTop: 6, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            Checkout or sign-in acting up? Leave your email — we&apos;ll upgrade you the moment it&apos;s back.
+          </p>
+          <WaitlistForm source="upgrade-modal" />
         </div>
       </div>
     </div>

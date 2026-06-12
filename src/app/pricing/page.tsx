@@ -11,6 +11,7 @@ import {
   type BillingInterval,
   type PlanId,
 } from '@/lib/billing/config'
+import { WaitlistForm } from '@/components/waitlist-form'
 
 export default function PricingPage() {
   const [interval, setInterval] = useState<BillingInterval>('annual')
@@ -338,6 +339,26 @@ export default function PricingPage() {
           >
             Start free →
           </Link>
+        </div>
+
+        {/* Waitlist fallback — signup can be down while the database is paused;
+            never lose the lead. DB-free capture via /api/waitlist. */}
+        <div
+          data-testid="waitlist-fallback"
+          className="flex flex-col"
+          style={{
+            marginTop: 12,
+            padding: '14px 20px',
+            borderRadius: 10,
+            background: 'var(--surface-1)',
+            border: '1px dashed var(--border-subtle)',
+            gap: 10,
+          }}
+        >
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            Sign-in not working right now? Leave your email and we&apos;ll set your account up the moment it&apos;s back.
+          </p>
+          <WaitlistForm source="pricing" />
         </div>
 
         <p style={{ marginTop: 24, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)' }}>
