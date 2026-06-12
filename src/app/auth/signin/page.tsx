@@ -1,12 +1,25 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 
 function SignInForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') ?? '/'
+
+  // Conversion attribution: when arriving from a task email / public task page
+  // (?ref=<token>&utm_source=...), stash it in a cookie so the sign-in callback
+  // can persist signup_source + referrer_token (fail-open, first-touch only).
+  useEffect(() => {
+    const ref = searchParams.get('ref')
+    const utmSource = searchParams.get('utm_source')
+    if (!ref && !utmSource) return
+    try {
+      const value = encodeURIComponent(JSON.stringify({ ref, utm_source: utmSource }))
+      document.cookie = `axyz_ref=${value}; path=/; max-age=${30 * 24 * 3600}; samesite=lax`
+    } catch { /* attribution is best-effort */ }
+  }, [searchParams])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

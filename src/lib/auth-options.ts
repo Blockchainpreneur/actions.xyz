@@ -5,6 +5,46 @@ import { upsertGoogleUser } from '@/lib/supabase'
 
 const googleConfigured = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
 
+// Conversion attribution: the sign-in page stashes ?ref=<token>/utm_source in
+// the axyz_ref cookie. Persist it on the user (first-touch only) and emit a
+// signup_from_task event. Entirely fail-open — attribution must never block
+// or break sign-in, including when the DB is paused or the columns are not
+// migrated yet.
+async function captureSignupAttribution(email: string) {
+  try {
+    const { cookies } = await import('next/headers')
+    const raw = (await cookies()).get('axyz_ref')?.value
+    if (!raw) return
+
+    const parsed = JSON.parse(decodeURIComponent(raw)) as { ref?: string | null; utm_source?: string | null }
+    const referrerToken = typeof parsed.ref === 'string' ? parsed.ref.slice(0, 2048) : null
+    const signupSource = typeof parsed.utm_source === 'string' ? parsed.utm_source.slice(0, 100) : null
+    if (!referrerToken && !signupSource) return
+
+    const { getSupabase } = await import('@/lib/supabase')
+    const supabase = getSupabase()
+    await supabase
+      .from('users')
+      .update({
+        signup_source: signupSource ?? 'task_referral',
+        referrer_token: referrerToken ? referrerToken.slice(0, 64) : null,
+      })
+      .eq('email', email.toLowerCase().trim())
+      .is('signup_source', null)
+
+    if (referrerToken) {
+      const { trackEvent } = await import('@/lib/events')
+      await trackEvent('signup_from_task', {
+        email,
+        token: referrerToken,
+        metadata: { utm_source: signupSource },
+      })
+    }
+  } catch (err) {
+    console.warn('[auth] signup attribution skipped:', (err as Error).message)
+  }
+}
+
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -59,6 +99,7 @@ export const authOptions: AuthOptions = {
           console.error('[auth] Failed to upsert user to DB', err)
           // Don't block sign-in if DB write fails
         }
+        await captureSignupAttribution(user.email)
       }
       return true
     },
