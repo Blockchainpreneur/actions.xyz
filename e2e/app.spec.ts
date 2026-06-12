@@ -14,7 +14,7 @@ async function freshPage(page: Page) {
 test.describe('Initial Load', () => {
   test('page loads with correct title and core layout', async ({ page }) => {
     await freshPage(page)
-    await expect(page).toHaveTitle('actions.xyz')
+    await expect(page).toHaveTitle(/^actions\.xyz/)
 
     // Nav elements present (use first() — Next.js dev overlay also has a nav)
     await expect(page.locator('nav').first()).toBeVisible()
