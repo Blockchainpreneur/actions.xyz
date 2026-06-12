@@ -85,7 +85,7 @@ function CtaPair({ competitor }: { competitor: string }) {
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center" style={{ gap: 10 }}>
       <Link
-        href="/auth/signin"
+        href="/"
         className="btn-press"
         style={{
           padding: '9px 18px',
@@ -100,7 +100,7 @@ function CtaPair({ competitor }: { competitor: string }) {
           whiteSpace: 'nowrap',
         }}
       >
-        Start free — 5 meetings/mo
+        Try the live board — no signup
       </Link>
       <Link
         href="/pricing"

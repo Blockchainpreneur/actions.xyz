@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { track } from '@vercel/analytics/server'
 import { extractActions } from '@/lib/extraction'
 import { RateLimiter, clientIpFrom } from '@/lib/rate-limit'
 
@@ -11,9 +12,19 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 // Module-scope: survives across requests within an instance.
 const limiter = new RateLimiter(DAILY_LIMIT, DAY_MS)
+
+// The likeliest first users are agents — make their arrival visible.
+const AI_AGENT_UA = /GPTBot|ClaudeBot|Claude-Web|PerplexityBot|anthropic|openai|cohere|Bytespider|CCBot|node|python-requests|axios|undici/i
+function trackAgentCall(req: NextRequest): void {
+  const ua = req.headers.get('user-agent') ?? 'none'
+  if (AI_AGENT_UA.test(ua)) {
+    track('ai_agent_call', { ua: ua.slice(0, 80) }).catch(() => {})
+  }
+}
 let pruneCounter = 0
 
 export async function POST(req: NextRequest) {
+  trackAgentCall(req)
   let body: { text?: unknown }
   try {
     body = await req.json() as { text?: unknown }
