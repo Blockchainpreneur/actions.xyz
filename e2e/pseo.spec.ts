@@ -397,3 +397,12 @@ test.describe('Failures + human-blocked', () => {
     expect(text).not.toMatch(/stripe|resend|supabase|npm|key/i)
   })
 })
+
+test.describe('Answer pages', () => {
+  test('canonical answer renders direct answer + FAQ JSON-LD', async ({ page }) => {
+    await page.goto('/answers/extract-action-items-from-meeting-transcript')
+    await expect(page.getByTestId('direct-answer')).toBeVisible()
+    const ld = await page.locator('script[type="application/ld+json"]').first().textContent()
+    expect(ld).toContain('FAQPage')
+  })
+})

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { ANSWERS } from '@/lib/answers/data'
 import { COMPETITOR_SLUGS } from '@/lib/compare/data'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://actionsxyz.vercel.app'
@@ -19,6 +20,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    ...ANSWERS.map(a => ({
+      url: `${BASE_URL}/answers/${a.slug}`,
+      lastModified,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
     ...COMPETITOR_SLUGS.map(slug => ({
       url: `${BASE_URL}/compare/${slug}`,
       lastModified,
